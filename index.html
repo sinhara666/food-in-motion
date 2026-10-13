@@ -86,7 +86,7 @@
 </head>
 <body>
 <header>
-  <img src="logo.png" alt="Food In Motion">
+  <img src="fim-van.png" alt="Food In Motion">
   <p class="tag">One tap. Everybody knows.</p>
 </header>
 
@@ -143,9 +143,9 @@
   <section id="tab-setup" class="tab">
     <label for="driverName">Your name</label>
     <input type="text" id="driverName" placeholder="e.g. Marcus">
-    <label for="groupNumber">Group text number (optional)</label>
-    <input type="tel" id="groupNumber" placeholder="The number the team texts go to">
-    <p class="hint">With a group number saved, the Text it button opens your texts with the update already written and addressed. You just hit send. No typing.</p>
+    <label for="groupNumbers">Team phone numbers, your group chat (optional)</label>
+    <input type="text" id="groupNumbers" placeholder="Every number in the group chat, separated by commas">
+    <p class="hint">There is no one group number. Your group chat is all the individual phones in it, so list them here once. After that, the Text it button opens that group thread with the update already written. You just hit send. No typing.</p>
     <label for="webhook">Team chat webhook (optional)</label>
     <input type="url" id="webhook" placeholder="https://discord.com/api/webhooks/...">
     <p class="hint">If your team uses Discord, Slack, or a similar chat, paste its webhook link here and every DONE tap posts the update to the team by itself, no second tap at all.</p>
@@ -176,7 +176,7 @@ let eidCounter = 100;
 function E(pid, meal, load) { return { eid: ++eidCounter, pid, meal: meal || "Lunch", load: load || "" }; }
 const seed = () => ({
   driverName: "",
-  groupNumber: "",
+  groupNumbers: "",
   webhook: "",
   showExamples: true,
   places: [
@@ -206,6 +206,7 @@ const examples = [
 let S;
 try { S = JSON.parse(localStorage.getItem(KEY)) || seed(); } catch (e) { S = seed(); }
 if (S.plan) { for (const d of DAYS) for (const e of (S.plan[d] || [])) { if (e.eid > eidCounter) eidCounter = e.eid; } }
+if (S.groupNumber && !S.groupNumbers) { S.groupNumbers = S.groupNumber; delete S.groupNumber; }
 function save() { localStorage.setItem(KEY, JSON.stringify(S)); }
 function nowTime() { return new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }); }
 function todayDay() { return DAYS[(new Date().getDay() + 6) % 7]; }
@@ -235,8 +236,8 @@ async function sendUpdate(msg) {
   }
   const bar = document.getElementById("updateBar");
   document.getElementById("updateMsg").textContent = msg;
-  const num = S.groupNumber.replace(/[^0-9+]/g, "");
-  document.getElementById("sendTextBtn").href = "sms:" + num + "?&body=" + encodeURIComponent(msg);
+  const nums = (S.groupNumbers || "").split(",").map(s => s.replace(/[^0-9+]/g, "")).filter(Boolean).join(",");
+  document.getElementById("sendTextBtn").href = "sms:" + nums + "?&body=" + encodeURIComponent(msg);
   bar.style.display = "block";
   bar.dataset.msg = msg;
   return false;
@@ -380,7 +381,7 @@ function render() {
       (x.load ? '<div style="color:#6b6259;font-size:13px;margin-top:2px">' + esc(x.load) + '</div>' : "") + '</div>').join("")
   ).join("") : '<div class="empty">No deliveries logged yet. Every DONE tap shows up here and stays.</div>';
   document.getElementById("driverName").value = S.driverName;
-  document.getElementById("groupNumber").value = S.groupNumber;
+  document.getElementById("groupNumbers").value = S.groupNumbers || "";
   document.getElementById("webhook").value = S.webhook;
 }
 
@@ -426,7 +427,7 @@ document.getElementById("copyBtn").addEventListener("click", () => {
 });
 document.getElementById("saveSetupBtn").addEventListener("click", () => {
   S.driverName = document.getElementById("driverName").value;
-  S.groupNumber = document.getElementById("groupNumber").value;
+  S.groupNumbers = document.getElementById("groupNumbers").value;
   S.webhook = document.getElementById("webhook").value;
   save(); render();
   toast("Setup saved");
