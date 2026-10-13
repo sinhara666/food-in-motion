@@ -36,8 +36,8 @@
   #updateBar { display: none; background: #17130f; color: #fff; border-radius: 16px; padding: 16px; margin-bottom: 14px; }
   #updateBar .msg { font-size: 15px; line-height: 1.5; margin-bottom: 12px; }
   #updateBar .row { display: flex; gap: 8px; }
-  #updateBar button, #updateBar a { flex: 1; text-align: center; padding: 13px 8px; border-radius: 10px; border: none; font-size: 14px; font-weight: 700; cursor: pointer; text-decoration: none; }
-  #sendTextBtn { background: linear-gradient(135deg, #dc2626, #7c3aed); color: #fff; }
+  #updateBar button { flex: 1; text-align: center; padding: 13px 8px; border-radius: 10px; border: none; font-size: 14px; font-weight: 700; cursor: pointer; text-decoration: none; }
+  #shareBtn { background: linear-gradient(135deg, #dc2626, #7c3aed); color: #fff; }
   #copyBtn { background: #fff; color: #17130f; }
   .drivercard { background: #fff; border: 1px solid #eee5da; border-radius: 16px; padding: 14px 16px; margin-bottom: 10px; box-shadow: 0 4px 14px rgba(120, 72, 20, .06); }
   .drivercard .name { font-weight: 800; font-size: 16px; display: flex; justify-content: space-between; }
@@ -108,9 +108,10 @@
     <div id="updateBar">
       <div class="msg" id="updateMsg"></div>
       <div class="row">
-        <a id="sendTextBtn" href="#">Text it to the group</a>
+        <button id="shareBtn">Send to Messenger</button>
         <button id="copyBtn">Copy</button>
       </div>
+      <p class="hint" style="color:#cbb9a6;margin:10px 0 0">Send to Messenger copies the update and opens Messenger, you paste it into the group chat and send. Or use Copy and paste it anywhere.</p>
     </div>
     <div id="stopList"></div>
     <div id="allDone" class="alldone" style="display:none">Route complete. Every stop delivered.</div>
@@ -143,12 +144,9 @@
   <section id="tab-setup" class="tab">
     <label for="driverName">Your name</label>
     <input type="text" id="driverName" placeholder="e.g. Marcus">
-    <label for="groupNumbers">Team phone numbers, your group chat (optional)</label>
-    <input type="text" id="groupNumbers" placeholder="Every number in the group chat, separated by commas">
-    <p class="hint">There is no one group number. Your group chat is all the individual phones in it, so list them here once. After that, the Text it button opens that group thread with the update already written. You just hit send. No typing.</p>
     <label for="webhook">Team chat webhook (optional)</label>
     <input type="url" id="webhook" placeholder="https://discord.com/api/webhooks/...">
-    <p class="hint">If your team uses Discord, Slack, or a similar chat, paste its webhook link here and every DONE tap posts the update to the team by itself, no second tap at all.</p>
+    <p class="hint">Your group chat is on Messenger, so after a DONE tap the update is written for you: tap Send to Messenger, paste it into the group chat, send. Nothing to type. If a team ever uses Discord or Slack instead, a webhook link pasted here makes DONE taps post by themselves.</p>
     <button class="savebtn" id="saveSetupBtn">Save setup</button>
 
     <label style="margin-top:26px">Saved places (your regular companies)</label>
@@ -176,7 +174,7 @@ let eidCounter = 100;
 function E(pid, meal, load) { return { eid: ++eidCounter, pid, meal: meal || "Lunch", load: load || "" }; }
 const seed = () => ({
   driverName: "",
-  groupNumbers: "",
+  
   webhook: "",
   showExamples: true,
   places: [
@@ -206,7 +204,6 @@ const examples = [
 let S;
 try { S = JSON.parse(localStorage.getItem(KEY)) || seed(); } catch (e) { S = seed(); }
 if (S.plan) { for (const d of DAYS) for (const e of (S.plan[d] || [])) { if (e.eid > eidCounter) eidCounter = e.eid; } }
-if (S.groupNumber && !S.groupNumbers) { S.groupNumbers = S.groupNumber; delete S.groupNumber; }
 function save() { localStorage.setItem(KEY, JSON.stringify(S)); }
 function nowTime() { return new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }); }
 function todayDay() { return DAYS[(new Date().getDay() + 6) % 7]; }
@@ -236,8 +233,6 @@ async function sendUpdate(msg) {
   }
   const bar = document.getElementById("updateBar");
   document.getElementById("updateMsg").textContent = msg;
-  const nums = (S.groupNumbers || "").split(",").map(s => s.replace(/[^0-9+]/g, "")).filter(Boolean).join(",");
-  document.getElementById("sendTextBtn").href = "sms:" + nums + "?&body=" + encodeURIComponent(msg);
   bar.style.display = "block";
   bar.dataset.msg = msg;
   return false;
@@ -381,7 +376,7 @@ function render() {
       (x.load ? '<div style="color:#6b6259;font-size:13px;margin-top:2px">' + esc(x.load) + '</div>' : "") + '</div>').join("")
   ).join("") : '<div class="empty">No deliveries logged yet. Every DONE tap shows up here and stays.</div>';
   document.getElementById("driverName").value = S.driverName;
-  document.getElementById("groupNumbers").value = S.groupNumbers || "";
+  
   document.getElementById("webhook").value = S.webhook;
 }
 
@@ -421,13 +416,22 @@ document.addEventListener("change", e => {
   const ld = e.target.closest("[data-load]");
   if (ld) setEntryLoad(planDay, ld.dataset.load, ld.value);
 });
+document.getElementById("shareBtn").addEventListener("click", async () => {
+  const msg = document.getElementById("updateBar").dataset.msg || "";
+  if (navigator.share) {
+    try { await navigator.share({ text: msg }); return; } catch (e) { if (e && e.name === "AbortError") return; }
+  }
+  if (navigator.clipboard) { try { await navigator.clipboard.writeText(msg); } catch (e) {} }
+  toast("Update copied. Paste it in the Messenger group.");
+  window.open("https://www.messenger.com/", "_blank");
+});
 document.getElementById("copyBtn").addEventListener("click", () => {
   const msg = document.getElementById("updateBar").dataset.msg || "";
   if (navigator.clipboard) navigator.clipboard.writeText(msg).then(() => toast("Copied. Paste it anywhere."));
 });
 document.getElementById("saveSetupBtn").addEventListener("click", () => {
   S.driverName = document.getElementById("driverName").value;
-  S.groupNumbers = document.getElementById("groupNumbers").value;
+  
   S.webhook = document.getElementById("webhook").value;
   save(); render();
   toast("Setup saved");
