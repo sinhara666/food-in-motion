@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Food In Motion - Boss Dashboard</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #faf8f5; color: #26292f; }
+  header { background: #17130f; color: #fff; padding: 18px 20px; display: flex; align-items: center; gap: 14px; }
+  header img { height: 44px; }
+  header .t1 { font-size: 20px; font-weight: 800; letter-spacing: .3px; }
+  header .t2 { font-size: 12.5px; color: #cbb9a6; font-weight: 600; }
+  main { max-width: 860px; margin: 0 auto; padding: 18px 16px 40px; }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 18px; }
+  .stat { background: #fff; border: 1px solid #eee5da; border-radius: 14px; padding: 14px; text-align: center; box-shadow: 0 2px 10px rgba(38,41,47,.05); }
+  .stat .n { font-size: 26px; font-weight: 800; }
+  .stat .l { font-size: 11px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: #6d7278; margin-top: 2px; }
+  .stat.alert .n { color: #dc2626; }
+  h2 { font-size: 15px; letter-spacing: 1px; text-transform: uppercase; color: #6d7278; margin: 22px 0 10px; }
+  .card { background: #fff; border: 1px solid #eee5da; border-radius: 14px; padding: 14px 16px; margin-bottom: 10px; box-shadow: 0 2px 10px rgba(38,41,47,.05); }
+  .stoprow { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+  .pname { font-weight: 800; font-size: 15.5px; }
+  .sub { font-size: 13px; color: #6d7278; margin-top: 2px; line-height: 1.5; }
+  .badge { font-size: 11px; font-weight: 800; letter-spacing: .5px; padding: 4px 10px; border-radius: 20px; white-space: nowrap; }
+  .badge.done { background: #dcfce7; color: #15803d; }
+  .badge.wait { background: #f3efe9; color: #6d7278; }
+  .badge.low { background: #fee2e2; color: #dc2626; }
+  .mealchip { display: inline-block; font-size: 10.5px; font-weight: 800; letter-spacing: 1px; padding: 2px 9px; border-radius: 20px; margin-left: 6px; vertical-align: 2px; }
+  .meal-Breakfast { background: #fef3c7; color: #b45309; }
+  .meal-Lunch { background: #dcfce7; color: #15803d; }
+  .meal-Dinner { background: #ede9fe; color: #6d28d9; }
+  .warn { background: #fef2f2; border: 1px solid #fecaca; border-left: 5px solid #dc2626; border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; font-size: 14px; }
+  .warn b { color: #dc2626; }
+  .daygrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; }
+  .daycard { background: #fff; border: 1px solid #eee5da; border-radius: 14px; padding: 12px 14px; }
+  .daycard.today { border-color: #7c3aed; box-shadow: 0 0 0 2px rgba(124,58,237,.15); }
+  .daycard .d { font-weight: 800; margin-bottom: 6px; }
+  .daycard .it { font-size: 13.5px; padding: 4px 0; border-top: 1px dashed #eee5da; }
+  .daycard .it:first-of-type { border-top: none; }
+  .driver { display: flex; align-items: center; gap: 12px; }
+  .avatar { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+  .avatar-fallback { display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #dc2626, #7c3aed); color: #fff; font-weight: 800; font-size: 18px; }
+  .bar { height: 8px; background: #f3efe9; border-radius: 6px; overflow: hidden; margin-top: 8px; }
+  .bar div { height: 100%; background: linear-gradient(90deg, #dc2626, #7c3aed); }
+  input[type="text"] { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #ddd2c4; font-size: 15px; background: #fff; margin-bottom: 12px; }
+  .printbtn { width: 100%; padding: 14px; border: none; border-radius: 12px; background: linear-gradient(135deg, #dc2626, #7c3aed); color: #fff; font-size: 15px; font-weight: 800; cursor: pointer; margin-top: 6px; }
+  .empty { background: #fff; border: 1px dashed #ddd2c4; border-radius: 14px; padding: 22px; text-align: center; color: #6d7278; font-size: 14.5px; line-height: 1.6; }
+  .logitem { font-size: 14px; padding: 9px 0; border-top: 1px dashed #eee5da; line-height: 1.55; }
+  .logitem:first-of-type { border-top: none; }
+  .logitem .t { color: #a89a8a; font-weight: 700; font-size: 12.5px; }
+  .dayhead { font-weight: 800; font-size: 14.5px; margin: 14px 0 2px; }
+  @media (max-width: 640px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+  @media print { .printbtn, input[type="text"] { display: none; } body { background: #fff; } }
+</style>
+</head>
+<body>
+<header>
+  <img src="fim-van.png" alt="F.I.M">
+  <div>
+    <div class="t1">Food In Motion</div>
+    <div class="t2">BOSS DASHBOARD</div>
+  </div>
+</header>
+<main>
+  <div id="app"></div>
+</main>
+
+<script>
+"use strict";
+const KEY = "foodinmotion_v3";
+const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const DAYNAMES = { Mon: "Monday", Tue: "Tuesday", Wed: "Wednesday", Thu: "Thursday", Fri: "Friday", Sat: "Saturday", Sun: "Sunday" };
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+let S = null;
+try { S = JSON.parse(localStorage.getItem(KEY)); } catch (e) { S = null; }
+
+function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+function todayDay() { return DAYS[(new Date().getDay() + 6) % 7]; }
+function dateKey() { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
+function mealsOf(e) { return Array.isArray(e.meals) ? e.meals : (e.meal ? [e.meal] : []); }
+function placeOf(e) { return (S.places || []).find(p => p.id === e.pid) || { name: "(place removed)", address: "" }; }
+function foodLine(f) {
+  if (!f) return "";
+  const bits = [];
+  if (f.protein) bits.push("Protein: " + f.protein);
+  if (f.starch) bits.push("Starch: " + f.starch);
+  if (f.greens) bits.push("Greens: " + f.greens);
+  if (f.veg) bits.push("Vegetables: " + f.veg);
+  if (f.fruit) bits.push("Fruit: " + f.fruit);
+  if (f.temp) bits.push("Temp: " + f.temp + "\u00B0F");
+  return bits.join(" \u00B7 ");
+}
+function tempLow(f) { return !!(f && f.temp && !isNaN(Number(f.temp)) && Number(f.temp) < 140); }
+function chips(e) { return mealsOf(e).map(m => '<span class="mealchip meal-' + esc(m) + '">' + esc(m) + '</span>').join(""); }
+function pretty(ds, dayCode) { const p = ds.split("-"); return (dayCode ? DAYNAMES[dayCode] + ", " : "") + MONTHS[Number(p[1]) - 1] + " " + Number(p[2]) + ", " + p[0]; }
+
+function render(filter) {
+  const root = document.getElementById("app");
+  if (!S || !S.plan) {
+    root.innerHTML = '<div class="empty"><b>No Food In Motion data on this phone yet.</b><br>' +
+      'This dashboard reads the same information the driver app keeps on the phone it runs on. ' +
+      'Open the driver app on this phone first, set it up, and this page fills in. ' +
+      'A live board that pulls every driver\'s phone together is a separate build.</div>';
+    return;
+  }
+  const td = todayDay(), dk = dateKey();
+  const entries = S.plan[td] || [];
+  const doneLog = (S.doneLog || {})[dk] || {};
+  const foodToday = (S.foodLog || {})[dk] || {};
+  const doneCount = entries.filter(e => doneLog[e.eid]).length;
+  const tempsLogged = entries.filter(e => foodToday[e.eid] && foodToday[e.eid].temp).length;
+  const lowToday = entries.filter(e => tempLow(foodToday[e.eid]));
+  const log = S.log || [];
+  const lowInLog = log.filter(x => tempLow(x.food));
+  const weekStops = DAYS.reduce((n, d) => n + (S.plan[d] || []).length, 0);
+
+  let out = "";
+  out += '<div class="stats">' +
+    '<div class="stat"><div class="n">' + doneCount + ' / ' + entries.length + '</div><div class="l">Stops done today</div></div>' +
+    '<div class="stat"><div class="n">' + tempsLogged + '</div><div class="l">Temps logged today</div></div>' +
+    '<div class="stat' + (lowToday.length || lowInLog.length ? ' alert' : '') + '"><div class="n">' + lowToday.length + '</div><div class="l">Low temps today</div></div>' +
+    '<div class="stat"><div class="n">' + weekStops + '</div><div class="l">Stops this week</div></div></div>';
+
+  if (lowToday.length) {
+    out += '<h2>Temperature watch</h2>' + lowToday.map(e => {
+      const f = foodToday[e.eid];
+      return '<div class="warn"><b>' + esc(f.temp) + '\u00B0F at ' + esc(placeOf(e).name) + '.</b> Hot food should hold at 140\u00B0F or above.</div>';
+    }).join("");
+  }
+
+  out += '<h2>Today, ' + DAYNAMES[td] + '</h2>';
+  out += entries.length ? entries.map((e, i) => {
+    const p = placeOf(e), done = !!doneLog[e.eid], f = foodToday[e.eid] || {};
+    return '<div class="card"><div class="stoprow"><div>' +
+      '<div class="pname">Stop ' + (i + 1) + '. ' + esc(p.name) + chips(e) + '</div>' +
+      '<div class="sub">' + esc(p.address) + (e.load ? '<br>' + esc(e.load) : '') + '</div>' +
+      (foodLine(f) ? '<div class="sub">' + esc(foodLine(f)) + '</div>' : '') +
+      '</div><div>' +
+      (done ? '<span class="badge done">Delivered ' + esc(doneLog[e.eid]) + '</span>' : '<span class="badge wait">Not yet</span>') +
+      (tempLow(f) ? ' <span class="badge low">Low temp</span>' : '') +
+      '</div></div></div>';
+  }).join("") : '<div class="empty">Nothing planned for today.</div>';
+
+  const myName = (S.driverName || "").trim() || "Driver";
+  const pct = entries.length ? Math.round((doneCount / entries.length) * 100) : 0;
+  const avatar = S.avatar
+    ? '<img class="avatar" src="' + S.avatar + '" alt="">'
+    : '<div class="avatar avatar-fallback">' + esc(myName.charAt(0).toUpperCase()) + '</div>';
+  out += '<h2>Drivers</h2><div class="card"><div class="driver">' + avatar +
+    '<div style="flex:1"><b>' + esc(myName) + '</b> <span class="sub">(this phone)</span>' +
+    '<div class="bar"><div style="width:' + pct + '%"></div></div>' +
+    '<div class="sub">' + doneCount + ' of ' + entries.length + ' stops done today</div></div></div></div>';
+
+  out += '<h2>This week</h2><div class="daygrid">' + DAYS.map(d =>
+    '<div class="daycard' + (d === td ? ' today' : '') + '"><div class="d">' + DAYNAMES[d] + (d === td ? ' (today)' : '') + '</div>' +
+    ((S.plan[d] || []).length
+      ? S.plan[d].map(e => '<div class="it">' + esc(placeOf(e).name) + chips(e) + '</div>').join("")
+      : '<div class="it sub">No stops</div>') +
+    '</div>').join("") + '</div>';
+
+  const lf = (filter || "").toLowerCase();
+  const shown = log.filter(x => !lf || x.place.toLowerCase().includes(lf));
+  const groups = [];
+  for (const x of shown) {
+    let g = groups.find(g => g.date === x.date);
+    if (!g) { g = { date: x.date, day: x.day, items: [] }; groups.push(g); }
+    g.items.push(x);
+  }
+  out += '<h2>Delivery records</h2>' +
+    '<input type="text" id="bossSearch" placeholder="Type a place name to search the records" value="' + esc(filter || "") + '">' +
+    (groups.length ? groups.map(g =>
+      '<div class="dayhead">' + pretty(g.date, g.day) + ' \u00B7 ' + g.items.length + (g.items.length === 1 ? ' stop' : ' stops') + '</div>' +
+      '<div class="card">' + g.items.map(x =>
+        '<div class="logitem"><span class="t">' + esc(x.time) + '</span> <b>' + esc(x.place) + '</b>' +
+        (Array.isArray(x.meals) ? x.meals.map(m => '<span class="mealchip meal-' + esc(m) + '">' + esc(m) + '</span>').join("") : "") +
+        (x.load ? '<div class="sub">' + esc(x.load) + '</div>' : "") +
+        (foodLine(x.food) ? '<div class="sub">' + esc(foodLine(x.food)) + '</div>' : "") +
+        (tempLow(x.food) ? '<div class="sub" style="color:#dc2626;font-weight:700">Under 140\u00B0F when logged.</div>' : "") +
+        '</div>').join("") + '</div>'
+    ).join("") : '<div class="empty">No deliveries recorded yet.</div>') +
+    '<button class="printbtn" id="printBtn">Print these records</button>';
+
+  root.innerHTML = out;
+  const sb = document.getElementById("bossSearch");
+  if (sb) sb.addEventListener("input", e => { const v = e.target.value; render(v); const n = document.getElementById("bossSearch"); n.focus(); n.setSelectionRange(n.value.length, n.value.length); });
+  const pb = document.getElementById("printBtn");
+  if (pb) pb.addEventListener("click", () => window.print());
+}
+
+render("");
+window.FIMBOSS = { get state() { return S; }, render };
+</script>
+</body>
+</html>
