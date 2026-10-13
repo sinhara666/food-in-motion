@@ -48,7 +48,7 @@
   .feeditem { background: #fff; border: 1px solid #eee5da; border-left: 4px solid #16a34a; border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; font-size: 14px; }
   .feeditem .t { color: #a89a8a; font-size: 12px; font-weight: 700; }
   label { display: block; font-size: 13px; font-weight: 700; margin: 14px 0 6px; }
-  input[type="text"], input[type="url"], input[type="tel"] { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #ddd2c4; font-size: 15px; background: #fff; }
+  input[type="text"], input[type="url"], input[type="tel"], input[type="number"] { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #ddd2c4; font-size: 15px; background: #fff; }
   .hint { font-size: 12px; color: #6b6259; margin-top: 4px; line-height: 1.5; }
   .savebtn { width: 100%; margin-top: 18px; padding: 15px; border: none; border-radius: 12px; background: linear-gradient(135deg, #dc2626, #7c3aed); color: #fff; font-size: 16px; font-weight: 800; cursor: pointer; }
   .ghostbtn { width: 100%; margin-top: 10px; padding: 13px; border-radius: 12px; border: 1px solid #ddd2c4; background: #fff; font-size: 14px; font-weight: 700; cursor: pointer; color: #6b6259; }
@@ -57,6 +57,19 @@
   .srow .del { background: none; border: none; color: #dc2626; font-weight: 700; cursor: pointer; font-size: 13px; }
   #toast { position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%); background: #17130f; color: #fff; padding: 12px 20px; border-radius: 30px; font-size: 14px; font-weight: 700; display: none; box-shadow: 0 10px 30px rgba(0,0,0,.3); z-index: 50; }
   .alldone { text-align: center; padding: 22px 10px; font-size: 17px; font-weight: 800; color: #15803d; }
+  .avatar { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+  .avatar.big { width: 76px; height: 76px; font-size: 30px; }
+  .avatar-fallback { display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #dc2626, #7c3aed); color: #fff; font-weight: 800; font-size: 18px; }
+  .cardhead { display: flex; align-items: center; gap: 12px; }
+  .cardhead .name { flex: 1; }
+  .profrow { display: flex; align-items: center; gap: 14px; margin: 6px 0 4px; }
+  .profbtns { flex: 1; }
+  .foodbox { margin-top: 12px; background: #fbf7f1; border: 1px dashed #ddd2c4; border-radius: 12px; padding: 10px; }
+  .foodtitle { font-size: 11px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: #6b6259; margin-bottom: 8px; }
+  .foodgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+  .foodbox input { padding: 10px; font-size: 14px; }
+  .fooddone { margin-top: 10px; font-size: 13px; color: #6b6259; line-height: 1.5; }
+  .tempwarn { color: #dc2626; font-weight: 700; font-size: 12.5px; margin-top: 6px; }
   .mealchip { display: inline-block; font-size: 11px; font-weight: 800; letter-spacing: 1px; padding: 3px 10px; border-radius: 20px; margin-left: 8px; vertical-align: 2px; }
   .meal-Breakfast { background: #fef3c7; color: #b45309; }
   .meal-Lunch { background: #dcfce7; color: #15803d; }
@@ -142,6 +155,16 @@
   </section>
 
   <section id="tab-setup" class="tab">
+    <label>Your profile</label>
+    <div class="profrow">
+      <div id="avatarPreview"></div>
+      <div class="profbtns">
+        <button class="ghostbtn" id="photoBtn" style="margin-top:0">Add your photo</button>
+        <button class="ghostbtn" id="photoRemoveBtn" style="display:none">Remove photo</button>
+      </div>
+    </div>
+    <input type="file" id="photoInput" accept="image/*" style="display:none">
+    <p class="hint">Your photo rides on your driver card on the Team Board, so the team sees who is who. It stays on this phone.</p>
     <label for="driverName">Your name</label>
     <input type="text" id="driverName" placeholder="e.g. Marcus">
     <label for="webhook">Team chat webhook (optional)</label>
@@ -174,6 +197,8 @@ let eidCounter = 100;
 function E(pid, meals, load) { return { eid: ++eidCounter, pid, meals: Array.isArray(meals) ? meals : (meals ? [meals] : ["Lunch"]), load: load || "" }; }
 const seed = () => ({
   driverName: "",
+  avatar: "",
+  foodLog: {},
   
   webhook: "",
   showExamples: true,
@@ -204,6 +229,8 @@ const examples = [
 let S;
 try { S = JSON.parse(localStorage.getItem(KEY)) || seed(); } catch (e) { S = seed(); }
 if (S.plan) { for (const d of DAYS) for (const e of (S.plan[d] || [])) { if (e.eid > eidCounter) eidCounter = e.eid; if (!Array.isArray(e.meals)) { e.meals = e.meal ? [e.meal] : []; } delete e.meal; } }
+if (!S.foodLog) S.foodLog = {};
+if (typeof S.avatar !== "string") S.avatar = "";
 function save() { localStorage.setItem(KEY, JSON.stringify(S)); }
 function nowTime() { return new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }); }
 function todayDay() { return DAYS[(new Date().getDay() + 6) % 7]; }
@@ -212,6 +239,45 @@ let planDay = todayDay();
 function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
 function myName() { return S.driverName.trim() || "Driver"; }
 function placeOf(e) { return S.places.find(p => p.id === e.pid) || { name: "(place removed)", address: "" }; }
+function foodOf(eid) { const day = (S.foodLog || {})[dateKey()] || {}; return day[eid] || {}; }
+function setFood(eid, key, val) {
+  if (!S.foodLog) S.foodLog = {};
+  if (!S.foodLog[dateKey()]) S.foodLog[dateKey()] = {};
+  if (!S.foodLog[dateKey()][eid]) S.foodLog[dateKey()][eid] = {};
+  S.foodLog[dateKey()][eid][key] = String(val).trim();
+  save();
+}
+function foodLine(f) {
+  if (!f) return "";
+  const bits = [];
+  if (f.protein) bits.push("Protein: " + f.protein);
+  if (f.starch) bits.push("Starch: " + f.starch);
+  if (f.greens) bits.push("Greens: " + f.greens);
+  if (f.fruit) bits.push("Fruit: " + f.fruit);
+  if (f.temp) bits.push("Temp: " + f.temp + "\u00B0F");
+  return bits.join(" \u00B7 ");
+}
+function tempWarn(f) { return !!(f && f.temp && !isNaN(Number(f.temp)) && Number(f.temp) < 140); }
+function avatarHtml(cls) {
+  if (S.avatar) return '<img class="avatar ' + (cls || "") + '" src="' + S.avatar + '" alt="">';
+  return '<div class="avatar avatar-fallback ' + (cls || "") + '">' + esc((myName() || "D").charAt(0).toUpperCase()) + '</div>';
+}
+function foodBox(e) {
+  const f = foodOf(e.eid);
+  if (isDone(e)) {
+    const line = foodLine(f);
+    if (!line) return "";
+    return '<div class="fooddone">' + esc(line) + (tempWarn(f) ? '<div class="tempwarn">Under 140\u00B0F. Hot food should hold at 140\u00B0F or above.</div>' : "") + '</div>';
+  }
+  const inp = (key, ph, type) => '<input type="' + (type || "text") + '" data-food="' + key + '" data-eid="' + e.eid + '" placeholder="' + ph + '" value="' + esc(f[key] || "") + '">';
+  return '<div class="foodbox"><div class="foodtitle">Food on this stop</div>' +
+    '<div class="foodgrid">' +
+    inp("protein", "Protein, e.g. chicken") + inp("starch", "Starch, e.g. rice, rolls") +
+    inp("greens", "Greens, e.g. garden salad") + inp("fruit", "Fruit, e.g. apples, fruit cups") +
+    '</div>' + inp("temp", "Temperature \u00B0F, e.g. 145", "number") +
+    (tempWarn(f) ? '<div class="tempwarn">Under 140\u00B0F. Hot food should hold at 140\u00B0F or above.</div>' : "") +
+  '</div>';
+}
 function mealsOf(e) { return Array.isArray(e.meals) ? e.meals : (e.meal ? [e.meal] : []); }
 function mealChips(e) { return mealsOf(e).map(m => '<span class="mealchip meal-' + esc(m) + '">' + esc(m) + '</span>').join(""); }
 function todaysEntries() { return S.plan[todayDay()] || []; }
@@ -222,7 +288,11 @@ function composeUpdate(entry) {
   const entries = todaysEntries();
   const doneCount = entries.filter(isDone).length;
   const p = placeOf(entry);
-  return myName() + " finished stop " + (entries.indexOf(entry) + 1) + ", " + p.name + (mealsOf(entry).length ? " (" + mealsOf(entry).join(" + ") + ")" : "") + ", at " + nowTime() + ". " + doneCount + " of " + entries.length + " stops done.";
+  const f = foodOf(entry.eid);
+  const fbits = [];
+  if (f.protein) fbits.push(f.protein);
+  if (f.temp) fbits.push(f.temp + "\u00B0F");
+  return myName() + " finished stop " + (entries.indexOf(entry) + 1) + ", " + p.name + (mealsOf(entry).length ? " (" + mealsOf(entry).join(" + ") + ")" : "") + ", at " + nowTime() + "." + (fbits.length ? " Food: " + fbits.join(", ") + "." : "") + " " + doneCount + " of " + entries.length + " stops done.";
 }
 
 async function sendUpdate(msg) {
@@ -248,7 +318,7 @@ function markDone(eid) {
   const msg = composeUpdate(entry);
   S.feed.unshift({ text: msg, time: S.doneLog[dateKey()][entry.eid] });
   const p = placeOf(entry);
-  S.log.unshift({ date: dateKey(), day: todayDay(), time: S.doneLog[dateKey()][entry.eid], place: p.name, meals: mealsOf(entry).slice(), load: entry.load || "", eid: entry.eid });
+  S.log.unshift({ date: dateKey(), day: todayDay(), time: S.doneLog[dateKey()][entry.eid], place: p.name, meals: mealsOf(entry).slice(), food: Object.assign({}, foodOf(entry.eid)), load: entry.load || "", eid: entry.eid });
   save(); render();
   sendUpdate(msg);
 }
@@ -258,7 +328,7 @@ function undoStop(eid) {
   S.log = S.log.filter(x => !(x.date === dateKey() && x.eid === Number(eid)));
   save(); render();
 }
-function clearTodayDone() { delete S.doneLog[dateKey()]; save(); render(); }
+function clearTodayDone() { delete S.doneLog[dateKey()]; if (S.foodLog) delete S.foodLog[dateKey()]; save(); render(); }
 
 function addPlace(name, address) {
   if (!name.trim()) { toast("Give the place a name"); return false; }
@@ -329,6 +399,7 @@ function render() {
       '<h3>' + esc(p.name) + mealChips(e) + '</h3>' +
       '<div class="addr">' + esc(p.address) + '</div>' +
       (e.load ? '<div class="load">' + esc(e.load) + '</div>' : "") +
+      foodBox(e) +
       (done
         ? '<div class="doneinfo"><span>Delivered at ' + esc(doneAt(e)) + '</span><button class="undo" data-undo="' + e.eid + '">Undo</button></div>'
         : '<button class="donebtn" data-done="' + e.eid + '">DONE</button>') +
@@ -358,9 +429,9 @@ function render() {
     '<div class="poolitem"><div><div class="pn">' + esc(p.name) + '</div><div class="pa">' + esc(p.address) + '</div></div>' +
     '<button data-add="' + p.id + '">Add to ' + planDay + '</button></div>').join("");
 
-  const mine = '<div class="drivercard"><div class="name"><span>' + esc(myName()) + ' (you)</span><span class="count">' + doneCount + " / " + entries.length + '</span></div><div class="bar"><div style="width:' + (entries.length ? (doneCount / entries.length) * 100 : 0) + '%"></div></div></div>';
+  const mine = '<div class="drivercard"><div class="cardhead">' + avatarHtml() + '<div class="name"><span>' + esc(myName()) + ' (you)</span><span class="count">' + doneCount + " / " + entries.length + '</span></div></div><div class="bar"><div style="width:' + (entries.length ? (doneCount / entries.length) * 100 : 0) + '%"></div></div></div>';
   const ex = S.showExamples ? examples.map(d =>
-    '<div class="drivercard"><div class="name"><span>' + esc(d.name) + ' <span class="ex">example</span></span><span class="count">' + d.done + " / " + d.total + '</span></div><div class="bar"><div style="width:' + (d.done / d.total) * 100 + '%"></div></div></div>').join("") : "";
+    '<div class="drivercard"><div class="cardhead"><div class="avatar avatar-fallback">' + esc(d.name.charAt(0)) + '</div><div class="name"><span>' + esc(d.name) + ' <span class="ex">example</span></span><span class="count">' + d.done + " / " + d.total + '</span></div></div><div class="bar"><div style="width:' + (d.done / d.total) * 100 + '%"></div></div></div>').join("") : "";
   document.getElementById("driverCards").innerHTML = mine + ex;
   document.getElementById("feedList").innerHTML = S.feed.length
     ? S.feed.map(f => '<div class="feeditem">' + esc(f.text) + ' <span class="t">' + esc(f.time) + '</span></div>').join("")
@@ -380,9 +451,14 @@ function render() {
     '<div class="sect">' + pretty(g.date) + " · " + g.items.length + (g.items.length === 1 ? " stop" : " stops") + '</div>' +
     g.items.map(x => '<div class="feeditem"><span class="t">' + esc(x.time) + '</span> ' + esc(x.place) +
       ((Array.isArray(x.meals) ? x.meals : (x.meal ? [x.meal] : [])).map(m => '<span class="mealchip meal-' + esc(m) + '">' + esc(m) + '</span>').join("")) +
-      (x.load ? '<div style="color:#6b6259;font-size:13px;margin-top:2px">' + esc(x.load) + '</div>' : "") + '</div>').join("")
+      (x.load ? '<div style="color:#6b6259;font-size:13px;margin-top:2px">' + esc(x.load) + '</div>' : "") +
+      (foodLine(x.food) ? '<div style="color:#6b6259;font-size:13px;margin-top:2px">' + esc(foodLine(x.food)) + '</div>' : "") +
+      (tempWarn(x.food) ? '<div class="tempwarn">Under 140\u00B0F. Hot food should hold at 140\u00B0F or above.</div>' : "") + '</div>').join("")
   ).join("") : '<div class="empty">No deliveries logged yet. Every DONE tap shows up here and stays.</div>';
   document.getElementById("driverName").value = S.driverName;
+  document.getElementById("avatarPreview").innerHTML = avatarHtml("big");
+  document.getElementById("photoRemoveBtn").style.display = S.avatar ? "block" : "none";
+  document.getElementById("photoBtn").textContent = S.avatar ? "Change your photo" : "Add your photo";
   
   document.getElementById("webhook").value = S.webhook;
 }
@@ -421,7 +497,9 @@ document.addEventListener("click", e => {
 });
 document.addEventListener("change", e => {
   const ld = e.target.closest("[data-load]");
-  if (ld) setEntryLoad(planDay, ld.dataset.load, ld.value);
+  if (ld) { setEntryLoad(planDay, ld.dataset.load, ld.value); return; }
+  const fd = e.target.closest("[data-food]");
+  if (fd) { setFood(fd.dataset.eid, fd.dataset.food, fd.value); if (fd.dataset.food === "temp") render(); }
 });
 document.getElementById("shareBtn").addEventListener("click", async () => {
   const msg = document.getElementById("updateBar").dataset.msg || "";
@@ -435,6 +513,28 @@ document.getElementById("shareBtn").addEventListener("click", async () => {
 document.getElementById("copyBtn").addEventListener("click", () => {
   const msg = document.getElementById("updateBar").dataset.msg || "";
   if (navigator.clipboard) navigator.clipboard.writeText(msg).then(() => toast("Copied. Paste it anywhere."));
+});
+document.getElementById("photoBtn").addEventListener("click", () => document.getElementById("photoInput").click());
+document.getElementById("photoRemoveBtn").addEventListener("click", () => { S.avatar = ""; save(); render(); });
+document.getElementById("photoInput").addEventListener("change", e => {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const img = new Image();
+    img.onload = () => {
+      const c = document.createElement("canvas");
+      const size = 160; c.width = size; c.height = size;
+      const ctx = c.getContext("2d");
+      const scale = Math.max(size / img.width, size / img.height);
+      const w = img.width * scale, h = img.height * scale;
+      ctx.drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
+      S.avatar = c.toDataURL("image/jpeg", 0.85);
+      save(); render(); toast("Photo saved");
+    };
+    img.src = reader.result;
+  };
+  reader.readAsDataURL(file);
 });
 document.getElementById("saveSetupBtn").addEventListener("click", () => {
   S.driverName = document.getElementById("driverName").value;
@@ -454,7 +554,7 @@ document.getElementById("logFilter").addEventListener("input", e => { window.__l
 document.getElementById("clearDoneBtn").addEventListener("click", () => { clearTodayDone(); toast("Today's done marks cleared"); });
 
 render();
-window.FEM = { get state() { return S; }, markDone, undoStop, addPlace, removePlace, addToDay, removeFromDay, moveEntry, toggleEntryMeal, setEntryLoad, todaysEntries, todayDay, dateKey, composeUpdate, setPlanDay(d) { planDay = d; }, get planDay() { return planDay; } };
+window.FEM = { get state() { return S; }, markDone, undoStop, addPlace, removePlace, addToDay, removeFromDay, moveEntry, toggleEntryMeal, setEntryLoad, setFood, foodOf, foodLine, tempWarn, setAvatar(u) { S.avatar = u; save(); render(); }, todaysEntries, todayDay, dateKey, composeUpdate, setPlanDay(d) { planDay = d; }, get planDay() { return planDay; } };
 </script>
 </body>
 </html>
