@@ -10,13 +10,14 @@
   header { background: #17130f; color: #fff; padding: 14px 16px 10px; text-align: center; }
   header img { width: 100%; max-width: 430px; border-radius: 14px; display: block; margin: 0 auto; }
   header .tag { color: #ffb27a; font-size: 13px; margin: 8px 0 4px; font-weight: 600; letter-spacing: .4px; }
-  nav { display: flex; gap: 8px; padding: 12px 14px 4px; max-width: 560px; margin: 0 auto; }
-  nav button { flex: 1; padding: 12px 6px; border-radius: 12px; border: 1px solid #e4ddd4; background: #fff; font-size: 14px; font-weight: 700; color: #6b6259; cursor: pointer; }
+  nav { display: flex; gap: 8px; padding: 12px 14px 4px; max-width: 560px; margin: 0 auto; flex-wrap: wrap; }
+  nav button { flex: 1; min-width: 70px; padding: 12px 4px; border-radius: 12px; border: 1px solid #e4ddd4; background: #fff; font-size: 13px; font-weight: 700; color: #6b6259; cursor: pointer; }
   nav button.active { background: linear-gradient(135deg, #dc2626, #7c3aed); color: #fff; border-color: transparent; }
   main { max-width: 560px; margin: 0 auto; padding: 10px 14px 40px; }
   .tab { display: none; } .tab.active { display: block; }
   .progress { background: #fff; border: 1px solid #eee5da; border-radius: 16px; padding: 14px 16px; margin: 8px 0 14px; box-shadow: 0 4px 14px rgba(120, 72, 20, .06); }
   .progress .big { font-size: 22px; font-weight: 800; }
+  .progress .sub { color: #6b6259; font-size: 13px; margin-top: 2px; }
   .bar { height: 12px; background: #f1e8de; border-radius: 8px; margin-top: 8px; overflow: hidden; }
   .bar > div { height: 100%; background: linear-gradient(90deg, #dc2626, #7c3aed); border-radius: 8px; transition: width .4s ease; }
   .stop { background: #fff; border: 1px solid #eee5da; border-radius: 18px; padding: 16px; margin-bottom: 12px; box-shadow: 0 4px 14px rgba(120, 72, 20, .06); }
@@ -56,6 +57,31 @@
   .srow .del { background: none; border: none; color: #dc2626; font-weight: 700; cursor: pointer; font-size: 13px; }
   #toast { position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%); background: #17130f; color: #fff; padding: 12px 20px; border-radius: 30px; font-size: 14px; font-weight: 700; display: none; box-shadow: 0 10px 30px rgba(0,0,0,.3); z-index: 50; }
   .alldone { text-align: center; padding: 22px 10px; font-size: 17px; font-weight: 800; color: #15803d; }
+  .mealchip { display: inline-block; font-size: 11px; font-weight: 800; letter-spacing: 1px; padding: 3px 10px; border-radius: 20px; margin-left: 8px; vertical-align: 2px; }
+  .meal-Breakfast { background: #fef3c7; color: #b45309; }
+  .meal-Lunch { background: #dcfce7; color: #15803d; }
+  .meal-Dinner { background: #ede9fe; color: #6d28d9; }
+  .days { display: flex; gap: 6px; margin: 6px 0 14px; }
+  .days button { flex: 1; padding: 11px 2px; border-radius: 10px; border: 1px solid #e4ddd4; background: #fff; font-size: 13px; font-weight: 800; color: #6b6259; cursor: pointer; }
+  .days button.active { background: linear-gradient(135deg, #dc2626, #7c3aed); color: #fff; border-color: transparent; }
+  .days button.today { outline: 2px solid #dc2626; outline-offset: 1px; }
+  .planentry { background: #fff; border: 1px solid #eee5da; border-radius: 14px; padding: 12px 14px; margin-bottom: 10px; box-shadow: 0 4px 14px rgba(120, 72, 20, .06); }
+  .planentry .pname { font-size: 16px; font-weight: 800; }
+  .planentry .paddr { color: #6b6259; font-size: 13px; }
+  .mealrow { display: flex; gap: 6px; margin: 10px 0; }
+  .mealrow button { flex: 1; padding: 9px 4px; border-radius: 9px; border: 1px solid #ddd2c4; background: #fff; font-size: 13px; font-weight: 700; color: #6b6259; cursor: pointer; }
+  .mealrow button.sel-Breakfast { background: #fef3c7; border-color: #b45309; color: #b45309; }
+  .mealrow button.sel-Lunch { background: #dcfce7; border-color: #15803d; color: #15803d; }
+  .mealrow button.sel-Dinner { background: #ede9fe; border-color: #6d28d9; color: #6d28d9; }
+  .moverow { display: flex; gap: 6px; }
+  .moverow button { flex: 1; padding: 10px 4px; border-radius: 9px; border: 1px solid #ddd2c4; background: #faf7f4; font-size: 13px; font-weight: 700; color: #44403c; cursor: pointer; }
+  .moverow button.rm { flex: 0 0 44px; color: #dc2626; }
+  .poolitem { display: flex; justify-content: space-between; align-items: center; background: #fff; border: 1px dashed #d8cec0; border-radius: 12px; padding: 11px 14px; margin-bottom: 8px; }
+  .poolitem .pn { font-weight: 700; font-size: 15px; }
+  .poolitem .pa { color: #6b6259; font-size: 12px; }
+  .poolitem button { padding: 10px 16px; border: none; border-radius: 10px; background: linear-gradient(135deg, #dc2626, #7c3aed); color: #fff; font-size: 13px; font-weight: 800; cursor: pointer; }
+  .sect { font-size: 13px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: #6b6259; margin: 16px 0 8px; }
+  .empty { background: #fff; border: 1px dashed #d8cec0; border-radius: 12px; padding: 16px; text-align: center; color: #6b6259; font-size: 14px; }
 </style>
 </head>
 <body>
@@ -66,6 +92,7 @@
 
 <nav>
   <button data-tab="route" class="active">My Route</button>
+  <button data-tab="plan">Week Plan</button>
   <button data-tab="board">Team Board</button>
   <button data-tab="setup">Setup</button>
 </nav>
@@ -74,6 +101,7 @@
   <section id="tab-route" class="tab active">
     <div class="progress">
       <div class="big" id="progressText">0 of 0 stops done</div>
+      <div class="sub" id="progressDay"></div>
       <div class="bar"><div id="progressBar" style="width:0%"></div></div>
     </div>
     <div id="updateBar">
@@ -85,6 +113,16 @@
     </div>
     <div id="stopList"></div>
     <div id="allDone" class="alldone" style="display:none">Route complete. Every stop delivered.</div>
+    <div id="noStops" class="empty" style="display:none">Nothing planned for today. Open Week Plan and add some stops to this day.</div>
+  </section>
+
+  <section id="tab-plan" class="tab">
+    <p class="hint" style="margin-top:4px">Every place has its own card. Put the ones running on a day, pick the meal on each card, and slide a card to another day whenever the plan changes. Tomorrow you can change it all again, the places themselves stay saved.</p>
+    <div class="days" id="dayRow"></div>
+    <div class="sect" id="planDayTitle">On this day</div>
+    <div id="planList"></div>
+    <div class="sect">All your places</div>
+    <div id="poolList"></div>
   </section>
 
   <section id="tab-board" class="tab">
@@ -106,18 +144,17 @@
     <p class="hint">If your team uses Discord, Slack, or a similar chat, paste its webhook link here and every DONE tap posts the update to the team by itself, no second tap at all.</p>
     <button class="savebtn" id="saveSetupBtn">Save setup</button>
 
-    <label style="margin-top:26px">Your stops today</label>
-    <div class="stoplist" id="setupStopList"></div>
-    <label for="newPlace">Add a stop: place name</label>
-    <input type="text" id="newPlace" placeholder="e.g. Maple Street Pantry">
-    <label for="newAddr">Address</label>
-    <input type="text" id="newAddr" placeholder="e.g. 412 Maple St">
-    <label for="newLoad">What gets dropped off</label>
-    <input type="text" id="newLoad" placeholder="e.g. 12 meal boxes">
-    <button class="savebtn" id="addStopBtn">Add stop</button>
+    <label style="margin-top:26px">Saved places (your regular companies)</label>
+    <p class="hint">Add a place once and it stays here for good. Days and meals get set on the Week Plan, not here.</p>
+    <div class="stoplist" id="placeList"></div>
+    <label for="newPlaceName">New saved place: name</label>
+    <input type="text" id="newPlaceName" placeholder="e.g. Maple Street Pantry">
+    <label for="newPlaceAddr">Address</label>
+    <input type="text" id="newPlaceAddr" placeholder="e.g. 412 Maple St">
+    <button class="savebtn" id="addPlaceBtn">Save this place</button>
 
     <button class="ghostbtn" id="removeExamplesBtn">Remove the example drivers</button>
-    <button class="ghostbtn" id="newDayBtn">Start a new day (clears done marks and updates)</button>
+    <button class="ghostbtn" id="clearDoneBtn">Clear today's done marks (mistake fix)</button>
   </section>
 </main>
 
@@ -125,19 +162,33 @@
 
 <script>
 "use strict";
-const KEY = "foodinmotion_v1";
+const KEY = "foodinmotion_v3";
+const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const DAYNAMES = { Mon: "Monday", Tue: "Tuesday", Wed: "Wednesday", Thu: "Thursday", Fri: "Friday", Sat: "Saturday", Sun: "Sunday" };
+let eidCounter = 100;
+function E(pid, meal, load) { return { eid: ++eidCounter, pid, meal: meal || "Lunch", load: load || "" }; }
 const seed = () => ({
   driverName: "",
   groupNumber: "",
   webhook: "",
   showExamples: true,
-  stops: [
-    { id: 1, place: "Maple Street Pantry", address: "412 Maple St", load: "12 meal boxes", done: false, doneAt: "" },
-    { id: 2, place: "Riverside Apartments", address: "88 River Rd, Building B", load: "8 meal boxes, 2 produce bags", done: false, doneAt: "" },
-    { id: 3, place: "Grace Community Church", address: "1200 Grace Ave", load: "20 meal boxes", done: false, doneAt: "" },
-    { id: 4, place: "Lincoln Elementary", address: "55 Lincoln Blvd", load: "15 snack packs", done: false, doneAt: "" },
-    { id: 5, place: "Hillcrest Senior Living", address: "9 Hillcrest Way", load: "10 meal boxes, 4 soup trays", done: false, doneAt: "" }
+  places: [
+    { id: 1, name: "Maple Street Pantry", address: "412 Maple St" },
+    { id: 2, name: "Riverside Apartments", address: "88 River Rd, Building B" },
+    { id: 3, name: "Grace Community Church", address: "1200 Grace Ave" },
+    { id: 4, name: "Lincoln Elementary", address: "55 Lincoln Blvd" },
+    { id: 5, name: "Hillcrest Senior Living", address: "9 Hillcrest Way" }
   ],
+  plan: {
+    Mon: [E(1, "Breakfast", "12 meal boxes"), E(2, "Lunch", "8 meal boxes, 2 produce bags"), E(5, "Dinner", "10 meal boxes, 4 soup trays")],
+    Tue: [E(1, "Breakfast", "12 meal boxes"), E(4, "Lunch", "15 snack packs")],
+    Wed: [E(1, "Breakfast", "12 meal boxes"), E(3, "Lunch", "20 meal boxes"), E(2, "Lunch", "8 meal boxes")],
+    Thu: [E(1, "Breakfast", "12 meal boxes"), E(4, "Lunch", "15 snack packs"), E(5, "Dinner", "10 meal boxes")],
+    Fri: [E(1, "Breakfast", "12 meal boxes"), E(3, "Lunch", "20 meal boxes")],
+    Sat: [],
+    Sun: []
+  },
+  doneLog: {},
   feed: []
 });
 const examples = [
@@ -146,14 +197,24 @@ const examples = [
 ];
 let S;
 try { S = JSON.parse(localStorage.getItem(KEY)) || seed(); } catch (e) { S = seed(); }
+if (S.plan) { for (const d of DAYS) for (const e of (S.plan[d] || [])) { if (e.eid > eidCounter) eidCounter = e.eid; } }
 function save() { localStorage.setItem(KEY, JSON.stringify(S)); }
 function nowTime() { return new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }); }
+function todayDay() { return DAYS[(new Date().getDay() + 6) % 7]; }
+function dateKey() { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
+let planDay = todayDay();
 function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
 function myName() { return S.driverName.trim() || "Driver"; }
+function placeOf(e) { return S.places.find(p => p.id === e.pid) || { name: "(place removed)", address: "" }; }
+function todaysEntries() { return S.plan[todayDay()] || []; }
+function isDone(e) { const log = S.doneLog[dateKey()] || {}; return !!log[e.eid]; }
+function doneAt(e) { const log = S.doneLog[dateKey()] || {}; return log[e.eid] || ""; }
 
-function composeUpdate(stop) {
-  const doneCount = S.stops.filter(s => s.done).length;
-  return myName() + " finished stop " + (S.stops.indexOf(stop) + 1) + ", " + stop.place + ", at " + nowTime() + ". " + doneCount + " of " + S.stops.length + " stops done.";
+function composeUpdate(entry) {
+  const entries = todaysEntries();
+  const doneCount = entries.filter(isDone).length;
+  const p = placeOf(entry);
+  return myName() + " finished stop " + (entries.indexOf(entry) + 1) + ", " + p.name + (entry.meal ? " (" + entry.meal + ")" : "") + ", at " + nowTime() + ". " + doneCount + " of " + entries.length + " stops done.";
 }
 
 async function sendUpdate(msg) {
@@ -173,61 +234,125 @@ async function sendUpdate(msg) {
   return false;
 }
 
-function markDone(id) {
-  const stop = S.stops.find(s => s.id === id);
-  if (!stop || stop.done) return;
-  stop.done = true; stop.doneAt = nowTime();
-  const msg = composeUpdate(stop);
-  S.feed.unshift({ text: msg, time: stop.doneAt });
+function markDone(eid) {
+  const entry = todaysEntries().find(e => e.eid === Number(eid));
+  if (!entry || isDone(entry)) return;
+  if (!S.doneLog[dateKey()]) S.doneLog[dateKey()] = {};
+  S.doneLog[dateKey()][entry.eid] = nowTime();
+  const msg = composeUpdate(entry);
+  S.feed.unshift({ text: msg, time: S.doneLog[dateKey()][entry.eid] });
   save(); render();
   sendUpdate(msg);
 }
-function undoStop(id) {
-  const stop = S.stops.find(s => s.id === id);
-  if (!stop) return;
-  stop.done = false; stop.doneAt = "";
+function undoStop(eid) {
+  const log = S.doneLog[dateKey()];
+  if (log) delete log[Number(eid)];
   save(); render();
 }
-function addStop(place, address, load) {
-  if (!place.trim()) { toast("Give the stop a place name"); return false; }
-  const id = S.stops.length ? Math.max.apply(null, S.stops.map(s => s.id)) + 1 : 1;
-  S.stops.push({ id, place: place.trim(), address: address.trim(), load: load.trim(), done: false, doneAt: "" });
+function clearTodayDone() { delete S.doneLog[dateKey()]; save(); render(); }
+
+function addPlace(name, address) {
+  if (!name.trim()) { toast("Give the place a name"); return false; }
+  const id = S.places.length ? Math.max.apply(null, S.places.map(p => p.id)) + 1 : 1;
+  S.places.push({ id, name: name.trim(), address: address.trim() });
   save(); render();
   return true;
 }
-function removeStop(id) { S.stops = S.stops.filter(s => s.id !== id); save(); render(); }
-function newDay() {
-  S.stops.forEach(s => { s.done = false; s.doneAt = ""; });
-  S.feed = [];
+function removePlace(id) {
+  S.places = S.places.filter(p => p.id !== Number(id));
+  for (const d of DAYS) S.plan[d] = (S.plan[d] || []).filter(e => e.pid !== Number(id));
   save(); render();
-  toast("New day started");
+}
+function addToDay(pid, day) {
+  const p = S.places.find(x => x.id === Number(pid));
+  if (!p) return false;
+  if (!S.plan[day]) S.plan[day] = [];
+  S.plan[day].push(E(p.id, "Lunch", ""));
+  save(); render();
+  return true;
+}
+function removeFromDay(day, eid) {
+  S.plan[day] = (S.plan[day] || []).filter(e => e.eid !== Number(eid));
+  save(); render();
+}
+function moveEntry(eid, fromDay, dir) {
+  const i = DAYS.indexOf(fromDay);
+  const j = i + dir;
+  if (j < 0 || j >= DAYS.length) return false;
+  const list = S.plan[fromDay] || [];
+  const idx = list.findIndex(e => e.eid === Number(eid));
+  if (idx < 0) return false;
+  const entry = list.splice(idx, 1)[0];
+  if (!S.plan[DAYS[j]]) S.plan[DAYS[j]] = [];
+  S.plan[DAYS[j]].push(entry);
+  planDay = DAYS[j];
+  save(); render();
+  toast("Moved to " + DAYNAMES[DAYS[j]]);
+  return true;
+}
+function setEntryMeal(day, eid, meal) {
+  const e = (S.plan[day] || []).find(x => x.eid === Number(eid));
+  if (e) { e.meal = meal; save(); render(); }
+}
+function setEntryLoad(day, eid, load) {
+  const e = (S.plan[day] || []).find(x => x.eid === Number(eid));
+  if (e) { e.load = load; save(); }
 }
 
 function render() {
-  const doneCount = S.stops.filter(s => s.done).length;
-  document.getElementById("progressText").textContent = doneCount + " of " + S.stops.length + " stops done";
-  document.getElementById("progressBar").style.width = (S.stops.length ? (doneCount / S.stops.length) * 100 : 0) + "%";
-  document.getElementById("allDone").style.display = (S.stops.length && doneCount === S.stops.length) ? "block" : "none";
-  const nextId = (S.stops.find(s => !s.done) || {}).id;
-  document.getElementById("stopList").innerHTML = S.stops.map((s, i) =>
-    '<div class="stop' + (s.done ? " done" : (s.id === nextId ? " next" : "")) + '">' +
+  const entries = todaysEntries();
+  const doneCount = entries.filter(isDone).length;
+  document.getElementById("progressText").textContent = doneCount + " of " + entries.length + " stops done";
+  document.getElementById("progressDay").textContent = DAYNAMES[todayDay()] + "'s route, from your Week Plan";
+  document.getElementById("progressBar").style.width = (entries.length ? (doneCount / entries.length) * 100 : 0) + "%";
+  document.getElementById("allDone").style.display = (entries.length && doneCount === entries.length) ? "block" : "none";
+  document.getElementById("noStops").style.display = entries.length ? "none" : "block";
+  const next = entries.find(e => !isDone(e));
+  document.getElementById("stopList").innerHTML = entries.map((e, i) => {
+    const p = placeOf(e); const done = isDone(e);
+    return '<div class="stop' + (done ? " done" : (next && e.eid === next.eid ? " next" : "")) + '">' +
       '<div class="num">Stop ' + (i + 1) + '</div>' +
-      '<h3>' + esc(s.place) + '</h3>' +
-      '<div class="addr">' + esc(s.address) + '</div>' +
-      (s.load ? '<div class="load">' + esc(s.load) + '</div>' : "") +
-      (s.done
-        ? '<div class="doneinfo"><span>Delivered at ' + esc(s.doneAt) + '</span><button class="undo" data-undo="' + s.id + '">Undo</button></div>'
-        : '<button class="donebtn" data-done="' + s.id + '">DONE</button>') +
-    '</div>').join("");
-  const mine = '<div class="drivercard"><div class="name"><span>' + esc(myName()) + ' (you)</span><span class="count">' + doneCount + " / " + S.stops.length + '</span></div><div class="bar"><div style="width:' + (S.stops.length ? (doneCount / S.stops.length) * 100 : 0) + '%"></div></div></div>';
+      '<h3>' + esc(p.name) + (e.meal ? '<span class="mealchip meal-' + esc(e.meal) + '">' + esc(e.meal) + '</span>' : "") + '</h3>' +
+      '<div class="addr">' + esc(p.address) + '</div>' +
+      (e.load ? '<div class="load">' + esc(e.load) + '</div>' : "") +
+      (done
+        ? '<div class="doneinfo"><span>Delivered at ' + esc(doneAt(e)) + '</span><button class="undo" data-undo="' + e.eid + '">Undo</button></div>'
+        : '<button class="donebtn" data-done="' + e.eid + '">DONE</button>') +
+    '</div>';
+  }).join("");
+
+  document.getElementById("dayRow").innerHTML = DAYS.map(d =>
+    '<button data-day="' + d + '"' + (d === planDay ? ' class="active"' : (d === todayDay() ? ' class="today"' : "")) + '>' + d + '</button>').join("");
+  document.getElementById("planDayTitle").textContent = "On " + DAYNAMES[planDay] + (planDay === todayDay() ? " (today)" : "");
+  const list = S.plan[planDay] || [];
+  document.getElementById("planList").innerHTML = list.length ? list.map(e => {
+    const p = placeOf(e);
+    return '<div class="planentry">' +
+      '<div class="pname">' + esc(p.name) + '</div>' +
+      '<div class="paddr">' + esc(p.address) + '</div>' +
+      '<div class="mealrow">' + ["Breakfast", "Lunch", "Dinner"].map(m =>
+        '<button data-meal="' + m + '" data-eid="' + e.eid + '"' + (e.meal === m ? ' class="sel-' + m + '"' : "") + '>' + m + '</button>').join("") + '</div>' +
+      '<input type="text" data-load="' + e.eid + '" placeholder="What gets dropped off (optional)" value="' + esc(e.load) + '">' +
+      '<div class="moverow" style="margin-top:10px">' +
+        '<button data-move="-1" data-eid="' + e.eid + '">◀ Prev day</button>' +
+        '<button data-move="1" data-eid="' + e.eid + '">Next day ▶</button>' +
+        '<button class="rm" data-rm="' + e.eid + '">✕</button>' +
+      '</div>' +
+    '</div>';
+  }).join("") : '<div class="empty">Nothing on ' + DAYNAMES[planDay] + ' yet. Add places from the list below.</div>';
+  document.getElementById("poolList").innerHTML = S.places.map(p =>
+    '<div class="poolitem"><div><div class="pn">' + esc(p.name) + '</div><div class="pa">' + esc(p.address) + '</div></div>' +
+    '<button data-add="' + p.id + '">Add to ' + planDay + '</button></div>').join("");
+
+  const mine = '<div class="drivercard"><div class="name"><span>' + esc(myName()) + ' (you)</span><span class="count">' + doneCount + " / " + entries.length + '</span></div><div class="bar"><div style="width:' + (entries.length ? (doneCount / entries.length) * 100 : 0) + '%"></div></div></div>';
   const ex = S.showExamples ? examples.map(d =>
     '<div class="drivercard"><div class="name"><span>' + esc(d.name) + ' <span class="ex">example</span></span><span class="count">' + d.done + " / " + d.total + '</span></div><div class="bar"><div style="width:' + (d.done / d.total) * 100 + '%"></div></div></div>').join("") : "";
   document.getElementById("driverCards").innerHTML = mine + ex;
   document.getElementById("feedList").innerHTML = S.feed.length
     ? S.feed.map(f => '<div class="feeditem">' + esc(f.text) + ' <span class="t">' + esc(f.time) + '</span></div>').join("")
     : '<div class="feeditem">No updates yet today. The first finished stop shows up here.</div>';
-  document.getElementById("setupStopList").innerHTML = S.stops.map((s, i) =>
-    '<div class="srow"><span>' + (i + 1) + '. ' + esc(s.place) + '</span><button class="del" data-del="' + s.id + '">Remove</button></div>').join("");
+  document.getElementById("placeList").innerHTML = S.places.map(p =>
+    '<div class="srow"><span>' + esc(p.name) + '</span><button class="del" data-delplace="' + p.id + '">Remove</button></div>').join("");
   document.getElementById("driverName").value = S.driverName;
   document.getElementById("groupNumber").value = S.groupNumber;
   document.getElementById("webhook").value = S.webhook;
@@ -248,12 +373,26 @@ document.querySelectorAll("nav button").forEach(b => b.addEventListener("click",
   document.getElementById("tab-" + b.dataset.tab).classList.add("active");
 }));
 document.addEventListener("click", e => {
-  const d = e.target.closest("[data-done]");
-  if (d) { markDone(Number(d.dataset.done)); return; }
-  const u = e.target.closest("[data-undo]");
-  if (u) { undoStop(Number(u.dataset.undo)); return; }
-  const del = e.target.closest("[data-del]");
-  if (del) { removeStop(Number(del.dataset.del)); }
+  const done = e.target.closest("[data-done]");
+  if (done) { markDone(done.dataset.done); return; }
+  const undo = e.target.closest("[data-undo]");
+  if (undo) { undoStop(undo.dataset.undo); return; }
+  const day = e.target.closest("[data-day]");
+  if (day) { planDay = day.dataset.day; render(); return; }
+  const add = e.target.closest("[data-add]");
+  if (add) { addToDay(add.dataset.add, planDay); toast("Added to " + DAYNAMES[planDay]); return; }
+  const rm = e.target.closest("[data-rm]");
+  if (rm) { removeFromDay(planDay, rm.dataset.rm); return; }
+  const mv = e.target.closest("[data-move]");
+  if (mv) { moveEntry(mv.dataset.eid, planDay, Number(mv.dataset.move)); return; }
+  const meal = e.target.closest("[data-meal]");
+  if (meal) { setEntryMeal(planDay, meal.dataset.eid, meal.dataset.meal); return; }
+  const dp = e.target.closest("[data-delplace]");
+  if (dp) { if (confirm("Remove this place and its spots on every day?")) removePlace(dp.dataset.delplace); }
+});
+document.addEventListener("change", e => {
+  const ld = e.target.closest("[data-load]");
+  if (ld) setEntryLoad(planDay, ld.dataset.load, ld.value);
 });
 document.getElementById("copyBtn").addEventListener("click", () => {
   const msg = document.getElementById("updateBar").dataset.msg || "";
@@ -266,17 +405,17 @@ document.getElementById("saveSetupBtn").addEventListener("click", () => {
   save(); render();
   toast("Setup saved");
 });
-document.getElementById("addStopBtn").addEventListener("click", () => {
-  if (addStop(document.getElementById("newPlace").value, document.getElementById("newAddr").value, document.getElementById("newLoad").value)) {
-    document.getElementById("newPlace").value = ""; document.getElementById("newAddr").value = ""; document.getElementById("newLoad").value = "";
-    toast("Stop added");
+document.getElementById("addPlaceBtn").addEventListener("click", () => {
+  if (addPlace(document.getElementById("newPlaceName").value, document.getElementById("newPlaceAddr").value)) {
+    document.getElementById("newPlaceName").value = ""; document.getElementById("newPlaceAddr").value = "";
+    toast("Place saved");
   }
 });
 document.getElementById("removeExamplesBtn").addEventListener("click", () => { S.showExamples = false; save(); render(); toast("Examples removed"); });
-document.getElementById("newDayBtn").addEventListener("click", () => { if (confirm("Start a new day? Done marks and updates clear, stops stay.")) newDay(); });
+document.getElementById("clearDoneBtn").addEventListener("click", () => { clearTodayDone(); toast("Today's done marks cleared"); });
 
 render();
-window.FEM = { get state() { return S; }, markDone, undoStop, addStop, removeStop, newDay, composeUpdate };
+window.FEM = { get state() { return S; }, markDone, undoStop, addPlace, removePlace, addToDay, removeFromDay, moveEntry, setEntryMeal, setEntryLoad, todaysEntries, todayDay, dateKey, composeUpdate, setPlanDay(d) { planDay = d; }, get planDay() { return planDay; } };
 </script>
 </body>
 </html>
