@@ -70,6 +70,16 @@
   .foodbox input { padding: 10px; font-size: 14px; }
   .fooddone { margin-top: 10px; font-size: 13px; color: #6b6259; line-height: 1.5; }
   .tempwarn { color: #dc2626; font-weight: 700; font-size: 12.5px; margin-top: 6px; }
+  .chatlog { display: flex; flex-direction: column; gap: 8px; margin: 12px 0; }
+  .bubble { max-width: 88%; padding: 10px 13px; border-radius: 14px; font-size: 14.5px; line-height: 1.5; }
+  .bubble.me { align-self: flex-end; background: linear-gradient(135deg, #dc2626, #7c3aed); color: #fff; border-bottom-right-radius: 4px; }
+  .bubble.bot { align-self: flex-start; background: #fff; border: 1px solid #eee5da; border-bottom-left-radius: 4px; }
+  .chatrow { display: flex; gap: 8px; }
+  .chatrow input { flex: 1; }
+  .chatrow button { border-radius: 10px; padding: 0 16px; font-size: 15px; font-weight: 800; cursor: pointer; }
+  #chatSend { background: #17130f; color: #fff; border: none; }
+  #micBtn { background: #fff; border: 1px solid #ddd2c4; }
+  .keybox { background: #fff; border: 1px solid #eee5da; border-radius: 12px; padding: 12px; margin-top: 10px; }
   .mealchip { display: inline-block; font-size: 11px; font-weight: 800; letter-spacing: 1px; padding: 3px 10px; border-radius: 20px; margin-left: 8px; vertical-align: 2px; }
   .meal-Breakfast { background: #fef3c7; color: #b45309; }
   .meal-Lunch { background: #dcfce7; color: #15803d; }
@@ -108,6 +118,7 @@
   <button data-tab="plan">Week Plan</button>
   <button data-tab="board">Team Board</button>
   <button data-tab="log">Log</button>
+  <button data-tab="assistant">Assistant</button>
   <button data-tab="setup">Setup</button>
 </nav>
 
@@ -152,6 +163,17 @@
     <p class="hint" style="margin-top:4px">Every DONE tap lands here and stays. Look back at any day or week and see exactly where the stops were made, which meal, and what time.</p>
     <input type="text" id="logFilter" placeholder="Type a place name to search the log">
     <div id="logList" style="margin-top:14px"></div>
+  </section>
+
+  <section id="tab-assistant" class="tab">
+    <p class="hint" style="margin-top:4px">Tell the assistant what you need, out loud or typed, and it sets it up for you. Save a new place, put stops on a day, set the meals, move a stop, mark a stop done. It only does what you tell it, and it tells you what it changed.</p>
+    <div id="keyBox"></div>
+    <div id="chatLog" class="chatlog"></div>
+    <div class="chatrow">
+      <input type="text" id="chatInput" placeholder="Example: put Lincoln on Tuesday, lunch and dinner">
+      <button id="micBtn" title="Speak it">&#127908;</button>
+      <button id="chatSend">Send</button>
+    </div>
   </section>
 
   <section id="tab-setup" class="tab">
@@ -200,6 +222,7 @@ const seed = () => ({
   driverName: "",
   avatar: "",
   foodLog: {},
+  groqKey: "",
   
   webhook: "",
   showExamples: true,
@@ -232,6 +255,7 @@ try { S = JSON.parse(localStorage.getItem(KEY)) || seed(); } catch (e) { S = see
 if (S.plan) { for (const d of DAYS) for (const e of (S.plan[d] || [])) { if (e.eid > eidCounter) eidCounter = e.eid; if (!Array.isArray(e.meals)) { e.meals = e.meal ? [e.meal] : []; } delete e.meal; } }
 if (!S.foodLog) S.foodLog = {};
 if (typeof S.avatar !== "string") S.avatar = "";
+if (typeof S.groqKey !== "string") S.groqKey = "";
 function save() { localStorage.setItem(KEY, JSON.stringify(S)); }
 function nowTime() { return new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }); }
 function todayDay() { return DAYS[(new Date().getDay() + 6) % 7]; }
@@ -556,8 +580,234 @@ document.getElementById("removeExamplesBtn").addEventListener("click", () => { S
 document.getElementById("logFilter").addEventListener("input", e => { window.__logFilter = e.target.value; render(); });
 document.getElementById("clearDoneBtn").addEventListener("click", () => { clearTodayDone(); toast("Today's done marks cleared"); });
 
+/* ---------------- the assistant: tell it, it sets it up ---------------- */
+const MEALS = ["Breakfast", "Lunch", "Dinner"];
+let chatMsgs = [{ who: "bot", text: "Tell me what you need. Try: add Federal Way High School, or put Lincoln on Tuesday for lunch and dinner." }];
+let chatBusy = false;
+let keyEditing = false;
+
+const ASSISTANT_TOOLS = [
+  { type: "function", function: { name: "add_place", description: "Save a new regular place the team delivers to.", parameters: { type: "object", properties: { name: { type: "string" }, address: { type: "string" } }, required: ["name"] } } },
+  { type: "function", function: { name: "add_stop", description: "Put a saved place on a day of the week plan, with the meals it gets that day.", parameters: { type: "object", properties: { day: { type: "string", enum: DAYS }, place: { type: "string" }, meals: { type: "array", items: { type: "string", enum: MEALS } }, load: { type: "string" } }, required: ["day", "place"] } } },
+  { type: "function", function: { name: "set_meals", description: "Replace the meals on a stop that is already on a day.", parameters: { type: "object", properties: { day: { type: "string", enum: DAYS }, place: { type: "string" }, meals: { type: "array", items: { type: "string", enum: MEALS } } }, required: ["day", "place", "meals"] } } },
+  { type: "function", function: { name: "move_stop", description: "Move a stop from one day to another.", parameters: { type: "object", properties: { place: { type: "string" }, from_day: { type: "string", enum: DAYS }, to_day: { type: "string", enum: DAYS } }, required: ["place", "from_day", "to_day"] } } },
+  { type: "function", function: { name: "remove_stop", description: "Take a stop off a day. The place stays saved.", parameters: { type: "object", properties: { day: { type: "string", enum: DAYS }, place: { type: "string" } }, required: ["day", "place"] } } },
+  { type: "function", function: { name: "set_load", description: "Set the drop-off note (load) on a stop on a day.", parameters: { type: "object", properties: { day: { type: "string", enum: DAYS }, place: { type: "string" }, load: { type: "string" } }, required: ["day", "place", "load"] } } },
+  { type: "function", function: { name: "mark_done", description: "Mark one of today's stops as delivered.", parameters: { type: "object", properties: { place: { type: "string" } }, required: ["place"] } } },
+  { type: "function", function: { name: "set_driver_name", description: "Set the driver's name used in updates.", parameters: { type: "object", properties: { name: { type: "string" } }, required: ["name"] } } },
+  { type: "function", function: { name: "clear_day", description: "Remove every stop from a day.", parameters: { type: "object", properties: { day: { type: "string", enum: DAYS } }, required: ["day"] } } }
+];
+
+function findPlace(name) {
+  const q = String(name || "").trim().toLowerCase();
+  if (!q) return null;
+  return S.places.find(p => p.name.toLowerCase() === q)
+    || S.places.find(p => p.name.toLowerCase().includes(q) || q.includes(p.name.toLowerCase()))
+    || null;
+}
+function findEntry(day, placeName) {
+  const p = findPlace(placeName);
+  if (!p) return null;
+  return (S.plan[day] || []).find(e => e.pid === p.id) || null;
+}
+function normMeals(list) {
+  const want = Array.isArray(list) ? list : [];
+  return MEALS.filter(m => want.some(x => String(x).toLowerCase() === m.toLowerCase()));
+}
+function execTool(name, a) {
+  a = a || {};
+  const dayOk = d => DAYS.includes(d);
+  try {
+    if (name === "add_place") {
+      if (!a.name) return "No name given for the place.";
+      if (findPlace(a.name)) return a.name + " is already saved.";
+      addPlace(a.name, a.address || "");
+      save(); render();
+      return "Saved the place " + a.name + ".";
+    }
+    if (name === "add_stop") {
+      if (!dayOk(a.day)) return "That day does not work. Use Mon, Tue, Wed, Thu, Fri, Sat, or Sun.";
+      const p = findPlace(a.place);
+      if (!p) return "No saved place matches " + a.place + ". Save it first with add_place.";
+      if ((S.plan[a.day] || []).some(e => e.pid === p.id)) return p.name + " is already on " + a.day + ".";
+      const entry = E(p.id, normMeals(a.meals).length ? normMeals(a.meals) : ["Lunch"], a.load || "");
+      if (!S.plan[a.day]) S.plan[a.day] = [];
+      S.plan[a.day].push(entry);
+      save(); render();
+      return "Put " + p.name + " on " + a.day + " with " + entry.meals.join(" and ") + ".";
+    }
+    if (name === "set_meals") {
+      const e = findEntry(a.day, a.place);
+      if (!e) return "That stop is not on " + a.day + ".";
+      e.meals = normMeals(a.meals);
+      save(); render();
+      return "Meals on " + placeOf(e).name + " (" + a.day + ") are now " + (e.meals.join(" and ") || "none set") + ".";
+    }
+    if (name === "move_stop") {
+      if (!dayOk(a.from_day) || !dayOk(a.to_day)) return "One of those days does not work.";
+      const e = findEntry(a.from_day, a.place);
+      if (!e) return "That stop is not on " + a.from_day + ".";
+      S.plan[a.from_day] = S.plan[a.from_day].filter(x => x.eid !== e.eid);
+      if (!S.plan[a.to_day]) S.plan[a.to_day] = [];
+      S.plan[a.to_day].push(e);
+      save(); render();
+      return "Moved " + placeOf(e).name + " from " + a.from_day + " to " + a.to_day + ".";
+    }
+    if (name === "remove_stop") {
+      const e = findEntry(a.day, a.place);
+      if (!e) return "That stop is not on " + a.day + ".";
+      S.plan[a.day] = S.plan[a.day].filter(x => x.eid !== e.eid);
+      save(); render();
+      return "Took " + placeOf(e).name + " off " + a.day + ". The place stays saved.";
+    }
+    if (name === "set_load") {
+      const e = findEntry(a.day, a.place);
+      if (!e) return "That stop is not on " + a.day + ".";
+      e.load = String(a.load || "");
+      save(); render();
+      return "Load note set on " + placeOf(e).name + " (" + a.day + ").";
+    }
+    if (name === "mark_done") {
+      const p = findPlace(a.place);
+      if (!p) return "No saved place matches " + a.place + ".";
+      const e = todaysEntries().find(x => x.pid === p.id);
+      if (!e) return p.name + " is not on today's route.";
+      if (isDone(e)) return p.name + " is already marked done.";
+      markDone(e.eid);
+      return "Marked " + p.name + " delivered.";
+    }
+    if (name === "set_driver_name") {
+      S.driverName = String(a.name || "");
+      save(); render();
+      return "Driver name set to " + S.driverName + ".";
+    }
+    if (name === "clear_day") {
+      if (!dayOk(a.day)) return "That day does not work.";
+      S.plan[a.day] = [];
+      save(); render();
+      return "Cleared every stop off " + a.day + ".";
+    }
+    return "Unknown tool " + name + ".";
+  } catch (err) {
+    return "Something went wrong doing that: " + err.message;
+  }
+}
+function planContext() {
+  const lines = [];
+  lines.push("Today is " + DAYNAMES[todayDay()] + " (" + todayDay() + ").");
+  lines.push("Driver name: " + (S.driverName || "(not set)"));
+  lines.push("Saved places: " + (S.places.map(p => p.name + (p.address ? " (" + p.address + ")" : "")).join("; ") || "none"));
+  for (const d of DAYS) {
+    const list = S.plan[d] || [];
+    if (list.length) lines.push(d + ": " + list.map(e => placeOf(e).name + " [" + mealsOf(e).join("+") + "]" + (e.load ? " load: " + e.load : "")).join("; "));
+  }
+  return lines.join("\n");
+}
+async function assistantSend(text) {
+  const msg = String(text || "").trim();
+  if (!msg || chatBusy) return;
+  chatMsgs.push({ who: "me", text: msg });
+  if (!S.groqKey) {
+    chatMsgs.push({ who: "bot", text: "I need a key before I can work. It is free: go to console.groq.com, make a free account, create an API key, and paste it in the box above. It stays on this phone only." });
+    keyEditing = true;
+    renderAssistant();
+    return;
+  }
+  chatBusy = true;
+  renderAssistant();
+  const changes = [];
+  try {
+    const messages = [
+      { role: "system", content: "You are the setup assistant inside Food In Motion, a food delivery team app. The user tells you changes in plain words and you carry them out with the tools. Rules: use the tools for every change; never invent a saved place, if the user names a new place save it with add_place first; days are Mon Tue Wed Thu Fri Sat Sun; meals are Breakfast, Lunch, Dinner and a stop can carry any mix; you can also answer questions about the plan from the setup below without tools. When you finish, answer in one or two short plain sentences saying exactly what you changed.\n\nCurrent setup:\n" + planContext() },
+      { role: "user", content: msg }
+    ];
+    for (let round = 0; round < 4; round++) {
+      const resp = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + S.groqKey },
+        body: JSON.stringify({ model: "llama-3.3-70b-versatile", messages, tools: ASSISTANT_TOOLS, tool_choice: "auto", temperature: 0.2 })
+      });
+      if (!resp.ok) throw new Error("groq " + resp.status);
+      const data = await resp.json();
+      const m = data.choices && data.choices[0] && data.choices[0].message;
+      if (!m) throw new Error("empty reply");
+      messages.push(m);
+      const calls = m.tool_calls || [];
+      if (!calls.length) {
+        chatMsgs.push({ who: "bot", text: (m.content || "").trim() || ("Done. " + changes.join(" ")) });
+        break;
+      }
+      for (const c of calls) {
+        let args = {};
+        try { args = JSON.parse(c.function.arguments || "{}"); } catch (e) { args = {}; }
+        const result = execTool(c.function.name, args);
+        changes.push(result);
+        messages.push({ role: "tool", tool_call_id: c.id, content: result });
+      }
+      if (round === 3) chatMsgs.push({ who: "bot", text: "Done. " + changes.join(" ") });
+    }
+  } catch (err) {
+    console.error(err);
+    chatMsgs.push({ who: "bot", text: "I could not get through just then. Check the key and your connection, then tell me again." });
+  }
+  chatBusy = false;
+  renderAssistant();
+  render();
+}
+function renderAssistant() {
+  const kb = document.getElementById("keyBox");
+  if (!S.groqKey || keyEditing) {
+    kb.innerHTML = '<div class="keybox"><label for="groqKeyInput" style="margin-top:0">Assistant key (Groq, free)</label>' +
+      '<input type="text" id="groqKeyInput" placeholder="Paste your Groq key here" value="' + esc(S.groqKey || "") + '">' +
+      '<p class="hint">The assistant runs on a free Groq key, yours, kept on this phone only. Get one at console.groq.com: sign up free, then API Keys, then Create.</p>' +
+      '<button class="savebtn" id="saveKeyBtn" style="margin-top:10px">Save the key</button></div>';
+    document.getElementById("saveKeyBtn").addEventListener("click", () => {
+      S.groqKey = document.getElementById("groqKeyInput").value.trim();
+      keyEditing = false;
+      save(); renderAssistant();
+      if (S.groqKey) chatMsgs.push({ who: "bot", text: "Key saved. Tell me what you need." });
+      renderAssistant();
+    });
+  } else {
+    kb.innerHTML = '<div class="keybox" style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:13.5px;font-weight:700">Assistant is on. Key saved on this phone.</span><button class="undo" id="changeKeyBtn">Change key</button></div>';
+    document.getElementById("changeKeyBtn").addEventListener("click", () => { keyEditing = true; renderAssistant(); });
+  }
+  document.getElementById("chatLog").innerHTML = chatMsgs.map(m =>
+    '<div class="bubble ' + m.who + '">' + esc(m.text) + '</div>').join("") +
+    (chatBusy ? '<div class="bubble bot">Working on it...</div>' : "");
+}
+document.getElementById("chatSend").addEventListener("click", () => {
+  const inp = document.getElementById("chatInput");
+  const v = inp.value;
+  inp.value = "";
+  assistantSend(v);
+});
+document.getElementById("chatInput").addEventListener("keydown", e => {
+  if (e.key === "Enter") document.getElementById("chatSend").click();
+});
+(function setupMic() {
+  const Rec = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const btn = document.getElementById("micBtn");
+  if (!Rec) { btn.style.display = "none"; return; }
+  btn.addEventListener("click", () => {
+    try {
+      const r = new Rec();
+      r.lang = "en-US";
+      r.interimResults = false;
+      r.onresult = ev => {
+        const said = ev.results[0][0].transcript;
+        document.getElementById("chatInput").value = said;
+        assistantSend(said);
+      };
+      r.start();
+      toast("Listening. Tell it what you need.");
+    } catch (e) { toast("Voice is not available on this phone."); }
+  });
+})();
+
 render();
-window.FEM = { get state() { return S; }, markDone, undoStop, addPlace, removePlace, addToDay, removeFromDay, moveEntry, toggleEntryMeal, setEntryLoad, setFood, foodOf, foodLine, tempWarn, setAvatar(u) { S.avatar = u; save(); render(); }, todaysEntries, todayDay, dateKey, composeUpdate, setPlanDay(d) { planDay = d; }, get planDay() { return planDay; } };
+renderAssistant();
+window.FEM = { get state() { return S; }, markDone, undoStop, addPlace, removePlace, addToDay, removeFromDay, moveEntry, toggleEntryMeal, setEntryLoad, setFood, foodOf, foodLine, tempWarn, assistantSend, execTool, planContext, getChat() { return chatMsgs; }, setGroqKey(k) { S.groqKey = k; save(); }, setAvatar(u) { S.avatar = u; save(); render(); }, todaysEntries, todayDay, dateKey, composeUpdate, setPlanDay(d) { planDay = d; }, get planDay() { return planDay; } };
 </script>
 </body>
 </html>
