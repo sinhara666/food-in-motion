@@ -119,7 +119,7 @@
   </section>
 
   <section id="tab-plan" class="tab">
-    <p class="hint" style="margin-top:4px">Every place has its own card. Put the ones running on a day, pick the meal on each card, and slide a card to another day whenever the plan changes. Tomorrow you can change it all again, the places themselves stay saved.</p>
+    <p class="hint" style="margin-top:4px">Every place has its own card. Put the ones running on a day, pick the meals on each card, one, two, or all three, and slide a card to another day whenever the plan changes. Tomorrow you can change it all again, the places themselves stay saved.</p>
     <div class="days" id="dayRow"></div>
     <div class="sect" id="planDayTitle">On this day</div>
     <div id="planList"></div>
@@ -171,7 +171,7 @@ const KEY = "foodinmotion_v3";
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const DAYNAMES = { Mon: "Monday", Tue: "Tuesday", Wed: "Wednesday", Thu: "Thursday", Fri: "Friday", Sat: "Saturday", Sun: "Sunday" };
 let eidCounter = 100;
-function E(pid, meal, load) { return { eid: ++eidCounter, pid, meal: meal || "Lunch", load: load || "" }; }
+function E(pid, meals, load) { return { eid: ++eidCounter, pid, meals: Array.isArray(meals) ? meals : (meals ? [meals] : ["Lunch"]), load: load || "" }; }
 const seed = () => ({
   driverName: "",
   
@@ -185,11 +185,11 @@ const seed = () => ({
     { id: 5, name: "Hillcrest Senior Living", address: "9 Hillcrest Way" }
   ],
   plan: {
-    Mon: [E(1, "Breakfast", "12 meal boxes"), E(2, "Lunch", "8 meal boxes, 2 produce bags"), E(5, "Dinner", "10 meal boxes, 4 soup trays")],
-    Tue: [E(1, "Breakfast", "12 meal boxes"), E(4, "Lunch", "15 snack packs")],
-    Wed: [E(1, "Breakfast", "12 meal boxes"), E(3, "Lunch", "20 meal boxes"), E(2, "Lunch", "8 meal boxes")],
-    Thu: [E(1, "Breakfast", "12 meal boxes"), E(4, "Lunch", "15 snack packs"), E(5, "Dinner", "10 meal boxes")],
-    Fri: [E(1, "Breakfast", "12 meal boxes"), E(3, "Lunch", "20 meal boxes")],
+    Mon: [E(1, ["Breakfast"], "12 meal boxes"), E(2, ["Lunch"], "8 meal boxes, 2 produce bags"), E(5, ["Dinner"], "10 meal boxes, 4 soup trays")],
+    Tue: [E(1, ["Breakfast"], "12 meal boxes"), E(4, ["Lunch"], "15 snack packs")],
+    Wed: [E(1, ["Breakfast"], "12 meal boxes"), E(3, ["Lunch", "Dinner"], "20 meal boxes, 6 dinner trays"), E(2, ["Lunch"], "8 meal boxes")],
+    Thu: [E(1, ["Breakfast"], "12 meal boxes"), E(4, ["Lunch"], "15 snack packs"), E(5, ["Dinner"], "10 meal boxes")],
+    Fri: [E(1, ["Breakfast"], "12 meal boxes"), E(3, ["Lunch"], "20 meal boxes")],
     Sat: [],
     Sun: []
   },
@@ -203,7 +203,7 @@ const examples = [
 ];
 let S;
 try { S = JSON.parse(localStorage.getItem(KEY)) || seed(); } catch (e) { S = seed(); }
-if (S.plan) { for (const d of DAYS) for (const e of (S.plan[d] || [])) { if (e.eid > eidCounter) eidCounter = e.eid; } }
+if (S.plan) { for (const d of DAYS) for (const e of (S.plan[d] || [])) { if (e.eid > eidCounter) eidCounter = e.eid; if (!Array.isArray(e.meals)) { e.meals = e.meal ? [e.meal] : []; } delete e.meal; } }
 function save() { localStorage.setItem(KEY, JSON.stringify(S)); }
 function nowTime() { return new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }); }
 function todayDay() { return DAYS[(new Date().getDay() + 6) % 7]; }
@@ -212,6 +212,8 @@ let planDay = todayDay();
 function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
 function myName() { return S.driverName.trim() || "Driver"; }
 function placeOf(e) { return S.places.find(p => p.id === e.pid) || { name: "(place removed)", address: "" }; }
+function mealsOf(e) { return Array.isArray(e.meals) ? e.meals : (e.meal ? [e.meal] : []); }
+function mealChips(e) { return mealsOf(e).map(m => '<span class="mealchip meal-' + esc(m) + '">' + esc(m) + '</span>').join(""); }
 function todaysEntries() { return S.plan[todayDay()] || []; }
 function isDone(e) { const log = S.doneLog[dateKey()] || {}; return !!log[e.eid]; }
 function doneAt(e) { const log = S.doneLog[dateKey()] || {}; return log[e.eid] || ""; }
@@ -220,7 +222,7 @@ function composeUpdate(entry) {
   const entries = todaysEntries();
   const doneCount = entries.filter(isDone).length;
   const p = placeOf(entry);
-  return myName() + " finished stop " + (entries.indexOf(entry) + 1) + ", " + p.name + (entry.meal ? " (" + entry.meal + ")" : "") + ", at " + nowTime() + ". " + doneCount + " of " + entries.length + " stops done.";
+  return myName() + " finished stop " + (entries.indexOf(entry) + 1) + ", " + p.name + (mealsOf(entry).length ? " (" + mealsOf(entry).join(" + ") + ")" : "") + ", at " + nowTime() + ". " + doneCount + " of " + entries.length + " stops done.";
 }
 
 async function sendUpdate(msg) {
@@ -246,7 +248,7 @@ function markDone(eid) {
   const msg = composeUpdate(entry);
   S.feed.unshift({ text: msg, time: S.doneLog[dateKey()][entry.eid] });
   const p = placeOf(entry);
-  S.log.unshift({ date: dateKey(), day: todayDay(), time: S.doneLog[dateKey()][entry.eid], place: p.name, meal: entry.meal || "", load: entry.load || "", eid: entry.eid });
+  S.log.unshift({ date: dateKey(), day: todayDay(), time: S.doneLog[dateKey()][entry.eid], place: p.name, meals: mealsOf(entry).slice(), load: entry.load || "", eid: entry.eid });
   save(); render();
   sendUpdate(msg);
 }
@@ -297,9 +299,14 @@ function moveEntry(eid, fromDay, dir) {
   toast("Moved to " + DAYNAMES[DAYS[j]]);
   return true;
 }
-function setEntryMeal(day, eid, meal) {
+function toggleEntryMeal(day, eid, meal) {
   const e = (S.plan[day] || []).find(x => x.eid === Number(eid));
-  if (e) { e.meal = meal; save(); render(); }
+  if (!e) return;
+  const ms = mealsOf(e).slice();
+  const i = ms.indexOf(meal);
+  if (i >= 0) ms.splice(i, 1); else ms.push(meal);
+  e.meals = ["Breakfast", "Lunch", "Dinner"].filter(m => ms.includes(m));
+  save(); render();
 }
 function setEntryLoad(day, eid, load) {
   const e = (S.plan[day] || []).find(x => x.eid === Number(eid));
@@ -319,7 +326,7 @@ function render() {
     const p = placeOf(e); const done = isDone(e);
     return '<div class="stop' + (done ? " done" : (next && e.eid === next.eid ? " next" : "")) + '">' +
       '<div class="num">Stop ' + (i + 1) + '</div>' +
-      '<h3>' + esc(p.name) + (e.meal ? '<span class="mealchip meal-' + esc(e.meal) + '">' + esc(e.meal) + '</span>' : "") + '</h3>' +
+      '<h3>' + esc(p.name) + mealChips(e) + '</h3>' +
       '<div class="addr">' + esc(p.address) + '</div>' +
       (e.load ? '<div class="load">' + esc(e.load) + '</div>' : "") +
       (done
@@ -338,7 +345,7 @@ function render() {
       '<div class="pname">' + esc(p.name) + '</div>' +
       '<div class="paddr">' + esc(p.address) + '</div>' +
       '<div class="mealrow">' + ["Breakfast", "Lunch", "Dinner"].map(m =>
-        '<button data-meal="' + m + '" data-eid="' + e.eid + '"' + (e.meal === m ? ' class="sel-' + m + '"' : "") + '>' + m + '</button>').join("") + '</div>' +
+        '<button data-meal="' + m + '" data-eid="' + e.eid + '"' + (mealsOf(e).includes(m) ? ' class="sel-' + m + '"' : "") + '>' + m + '</button>').join("") + '</div>' +
       '<input type="text" data-load="' + e.eid + '" placeholder="What gets dropped off (optional)" value="' + esc(e.load) + '">' +
       '<div class="moverow" style="margin-top:10px">' +
         '<button data-move="-1" data-eid="' + e.eid + '">◀ Prev day</button>' +
@@ -372,7 +379,7 @@ function render() {
   document.getElementById("logList").innerHTML = groups.length ? groups.map(g =>
     '<div class="sect">' + pretty(g.date) + " · " + g.items.length + (g.items.length === 1 ? " stop" : " stops") + '</div>' +
     g.items.map(x => '<div class="feeditem"><span class="t">' + esc(x.time) + '</span> ' + esc(x.place) +
-      (x.meal ? '<span class="mealchip meal-' + esc(x.meal) + '">' + esc(x.meal) + '</span>' : "") +
+      ((Array.isArray(x.meals) ? x.meals : (x.meal ? [x.meal] : [])).map(m => '<span class="mealchip meal-' + esc(m) + '">' + esc(m) + '</span>').join("")) +
       (x.load ? '<div style="color:#6b6259;font-size:13px;margin-top:2px">' + esc(x.load) + '</div>' : "") + '</div>').join("")
   ).join("") : '<div class="empty">No deliveries logged yet. Every DONE tap shows up here and stays.</div>';
   document.getElementById("driverName").value = S.driverName;
@@ -408,7 +415,7 @@ document.addEventListener("click", e => {
   const mv = e.target.closest("[data-move]");
   if (mv) { moveEntry(mv.dataset.eid, planDay, Number(mv.dataset.move)); return; }
   const meal = e.target.closest("[data-meal]");
-  if (meal) { setEntryMeal(planDay, meal.dataset.eid, meal.dataset.meal); return; }
+  if (meal) { toggleEntryMeal(planDay, meal.dataset.eid, meal.dataset.meal); return; }
   const dp = e.target.closest("[data-delplace]");
   if (dp) { if (confirm("Remove this place and its spots on every day?")) removePlace(dp.dataset.delplace); }
 });
@@ -447,7 +454,7 @@ document.getElementById("logFilter").addEventListener("input", e => { window.__l
 document.getElementById("clearDoneBtn").addEventListener("click", () => { clearTodayDone(); toast("Today's done marks cleared"); });
 
 render();
-window.FEM = { get state() { return S; }, markDone, undoStop, addPlace, removePlace, addToDay, removeFromDay, moveEntry, setEntryMeal, setEntryLoad, todaysEntries, todayDay, dateKey, composeUpdate, setPlanDay(d) { planDay = d; }, get planDay() { return planDay; } };
+window.FEM = { get state() { return S; }, markDone, undoStop, addPlace, removePlace, addToDay, removeFromDay, moveEntry, toggleEntryMeal, setEntryLoad, todaysEntries, todayDay, dateKey, composeUpdate, setPlanDay(d) { planDay = d; }, get planDay() { return planDay; } };
 </script>
 </body>
 </html>
