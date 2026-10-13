@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Food E Motion — Driver Board</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, "Segoe UI", Roboto, sans-serif; background: #faf7f4; color: #26221e; }
+  header { background: #17130f; color: #fff; padding: 14px 16px 10px; text-align: center; }
+  header img { width: 100%; max-width: 430px; border-radius: 14px; display: block; margin: 0 auto; }
+  header .tag { color: #ffb27a; font-size: 13px; margin: 8px 0 4px; font-weight: 600; letter-spacing: .4px; }
+  nav { display: flex; gap: 8px; padding: 12px 14px 4px; max-width: 560px; margin: 0 auto; }
+  nav button { flex: 1; padding: 12px 6px; border-radius: 12px; border: 1px solid #e4ddd4; background: #fff; font-size: 14px; font-weight: 700; color: #6b6259; cursor: pointer; }
+  nav button.active { background: linear-gradient(135deg, #f97316, #dc2626); color: #fff; border-color: transparent; }
+  main { max-width: 560px; margin: 0 auto; padding: 10px 14px 40px; }
+  .tab { display: none; } .tab.active { display: block; }
+  .progress { background: #fff; border: 1px solid #eee5da; border-radius: 16px; padding: 14px 16px; margin: 8px 0 14px; box-shadow: 0 4px 14px rgba(120, 72, 20, .06); }
+  .progress .big { font-size: 22px; font-weight: 800; }
+  .bar { height: 12px; background: #f1e8de; border-radius: 8px; margin-top: 8px; overflow: hidden; }
+  .bar > div { height: 100%; background: linear-gradient(90deg, #f97316, #dc2626); border-radius: 8px; transition: width .4s ease; }
+  .stop { background: #fff; border: 1px solid #eee5da; border-radius: 18px; padding: 16px; margin-bottom: 12px; box-shadow: 0 4px 14px rgba(120, 72, 20, .06); }
+  .stop.next { border: 2px solid #f97316; box-shadow: 0 8px 22px rgba(249, 115, 22, .18); }
+  .stop .num { font-size: 11px; font-weight: 800; letter-spacing: 1.5px; color: #f97316; text-transform: uppercase; }
+  .stop.next .num::after { content: " · NEXT STOP"; color: #dc2626; }
+  .stop h3 { margin: 4px 0 2px; font-size: 21px; }
+  .stop .addr { color: #6b6259; font-size: 14px; }
+  .stop .load { margin-top: 6px; font-size: 14px; font-weight: 600; }
+  .donebtn { width: 100%; margin-top: 14px; padding: 20px; border: none; border-radius: 14px; background: linear-gradient(135deg, #16a34a, #15803d); color: #fff; font-size: 20px; font-weight: 800; letter-spacing: 1px; cursor: pointer; }
+  .donebtn:active { transform: scale(.98); }
+  .stop.done { opacity: .75; }
+  .stop.done h3 { text-decoration: line-through; }
+  .doneinfo { margin-top: 12px; font-size: 14px; font-weight: 700; color: #15803d; display: flex; justify-content: space-between; align-items: center; }
+  .undo { background: none; border: none; color: #6b6259; font-size: 13px; text-decoration: underline; cursor: pointer; font-weight: 600; }
+  #updateBar { display: none; background: #17130f; color: #fff; border-radius: 16px; padding: 16px; margin-bottom: 14px; }
+  #updateBar .msg { font-size: 15px; line-height: 1.5; margin-bottom: 12px; }
+  #updateBar .row { display: flex; gap: 8px; }
+  #updateBar button, #updateBar a { flex: 1; text-align: center; padding: 13px 8px; border-radius: 10px; border: none; font-size: 14px; font-weight: 700; cursor: pointer; text-decoration: none; }
+  #sendTextBtn { background: linear-gradient(135deg, #f97316, #dc2626); color: #fff; }
+  #copyBtn { background: #fff; color: #17130f; }
+  .drivercard { background: #fff; border: 1px solid #eee5da; border-radius: 16px; padding: 14px 16px; margin-bottom: 10px; box-shadow: 0 4px 14px rgba(120, 72, 20, .06); }
+  .drivercard .name { font-weight: 800; font-size: 16px; display: flex; justify-content: space-between; }
+  .drivercard .name .count { color: #f97316; }
+  .ex { font-size: 10px; font-weight: 800; letter-spacing: 1px; color: #a89a8a; text-transform: uppercase; }
+  .feed { margin-top: 16px; }
+  .feed h4 { margin: 0 0 8px; font-size: 13px; letter-spacing: 1px; text-transform: uppercase; color: #6b6259; }
+  .feeditem { background: #fff; border: 1px solid #eee5da; border-left: 4px solid #16a34a; border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; font-size: 14px; }
+  .feeditem .t { color: #a89a8a; font-size: 12px; font-weight: 700; }
+  label { display: block; font-size: 13px; font-weight: 700; margin: 14px 0 6px; }
+  input[type="text"], input[type="url"], input[type="tel"] { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #ddd2c4; font-size: 15px; background: #fff; }
+  .hint { font-size: 12px; color: #6b6259; margin-top: 4px; line-height: 1.5; }
+  .savebtn { width: 100%; margin-top: 18px; padding: 15px; border: none; border-radius: 12px; background: linear-gradient(135deg, #f97316, #dc2626); color: #fff; font-size: 16px; font-weight: 800; cursor: pointer; }
+  .ghostbtn { width: 100%; margin-top: 10px; padding: 13px; border-radius: 12px; border: 1px solid #ddd2c4; background: #fff; font-size: 14px; font-weight: 700; cursor: pointer; color: #6b6259; }
+  .stoplist { margin-top: 10px; }
+  .stoplist .srow { display: flex; justify-content: space-between; align-items: center; background: #fff; border: 1px solid #eee5da; border-radius: 10px; padding: 10px 12px; margin-bottom: 6px; font-size: 14px; }
+  .srow .del { background: none; border: none; color: #dc2626; font-weight: 700; cursor: pointer; font-size: 13px; }
+  #toast { position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%); background: #17130f; color: #fff; padding: 12px 20px; border-radius: 30px; font-size: 14px; font-weight: 700; display: none; box-shadow: 0 10px 30px rgba(0,0,0,.3); z-index: 50; }
+  .alldone { text-align: center; padding: 22px 10px; font-size: 17px; font-weight: 800; color: #15803d; }
+</style>
+</head>
+<body>
+<header>
+  <img src="logo.png" alt="Food E Motion">
+  <p class="tag">One tap. Everybody knows.</p>
+</header>
+
+<nav>
+  <button data-tab="route" class="active">My Route</button>
+  <button data-tab="board">Team Board</button>
+  <button data-tab="setup">Setup</button>
+</nav>
+
+<main>
+  <section id="tab-route" class="tab active">
+    <div class="progress">
+      <div class="big" id="progressText">0 of 0 stops done</div>
+      <div class="bar"><div id="progressBar" style="width:0%"></div></div>
+    </div>
+    <div id="updateBar">
+      <div class="msg" id="updateMsg"></div>
+      <div class="row">
+        <a id="sendTextBtn" href="#">Text it to the group</a>
+        <button id="copyBtn">Copy</button>
+      </div>
+    </div>
+    <div id="stopList"></div>
+    <div id="allDone" class="alldone" style="display:none">Route complete. Every stop delivered.</div>
+  </section>
+
+  <section id="tab-board" class="tab">
+    <div id="driverCards"></div>
+    <div class="feed">
+      <h4>Latest updates</h4>
+      <div id="feedList"></div>
+    </div>
+  </section>
+
+  <section id="tab-setup" class="tab">
+    <label for="driverName">Your name</label>
+    <input type="text" id="driverName" placeholder="e.g. Marcus">
+    <label for="groupNumber">Group text number (optional)</label>
+    <input type="tel" id="groupNumber" placeholder="The number the team texts go to">
+    <p class="hint">With a group number saved, the Text it button opens your texts with the update already written and addressed. You just hit send. No typing.</p>
+    <label for="webhook">Team chat webhook (optional)</label>
+    <input type="url" id="webhook" placeholder="https://discord.com/api/webhooks/...">
+    <p class="hint">If your team uses Discord, Slack, or a similar chat, paste its webhook link here and every DONE tap posts the update to the team by itself, no second tap at all.</p>
+    <button class="savebtn" id="saveSetupBtn">Save setup</button>
+
+    <label style="margin-top:26px">Your stops today</label>
+    <div class="stoplist" id="setupStopList"></div>
+    <label for="newPlace">Add a stop: place name</label>
+    <input type="text" id="newPlace" placeholder="e.g. Maple Street Pantry">
+    <label for="newAddr">Address</label>
+    <input type="text" id="newAddr" placeholder="e.g. 412 Maple St">
+    <label for="newLoad">What gets dropped off</label>
+    <input type="text" id="newLoad" placeholder="e.g. 12 meal boxes">
+    <button class="savebtn" id="addStopBtn">Add stop</button>
+
+    <button class="ghostbtn" id="removeExamplesBtn">Remove the example drivers</button>
+    <button class="ghostbtn" id="newDayBtn">Start a new day (clears done marks and updates)</button>
+  </section>
+</main>
+
+<div id="toast"></div>
+
+<script>
+"use strict";
+const KEY = "foodemotion_v1";
+const seed = () => ({
+  driverName: "",
+  groupNumber: "",
+  webhook: "",
+  showExamples: true,
+  stops: [
+    { id: 1, place: "Maple Street Pantry", address: "412 Maple St", load: "12 meal boxes", done: false, doneAt: "" },
+    { id: 2, place: "Riverside Apartments", address: "88 River Rd, Building B", load: "8 meal boxes, 2 produce bags", done: false, doneAt: "" },
+    { id: 3, place: "Grace Community Church", address: "1200 Grace Ave", load: "20 meal boxes", done: false, doneAt: "" },
+    { id: 4, place: "Lincoln Elementary", address: "55 Lincoln Blvd", load: "15 snack packs", done: false, doneAt: "" },
+    { id: 5, place: "Hillcrest Senior Living", address: "9 Hillcrest Way", load: "10 meal boxes, 4 soup trays", done: false, doneAt: "" }
+  ],
+  feed: []
+});
+const examples = [
+  { name: "Dana", done: 4, total: 6 },
+  { name: "Rob", done: 2, total: 5 }
+];
+let S;
+try { S = JSON.parse(localStorage.getItem(KEY)) || seed(); } catch (e) { S = seed(); }
+function save() { localStorage.setItem(KEY, JSON.stringify(S)); }
+function nowTime() { return new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }); }
+function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+function myName() { return S.driverName.trim() || "Driver"; }
+
+function composeUpdate(stop) {
+  const doneCount = S.stops.filter(s => s.done).length;
+  return myName() + " finished stop " + (S.stops.indexOf(stop) + 1) + ", " + stop.place + ", at " + nowTime() + ". " + doneCount + " of " + S.stops.length + " stops done.";
+}
+
+async function sendUpdate(msg) {
+  if (S.webhook.trim()) {
+    try {
+      await fetch(S.webhook.trim(), { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ content: msg, text: msg }) });
+      toast("Update sent to the team");
+      return true;
+    } catch (e) { /* fall through to the text bar */ }
+  }
+  const bar = document.getElementById("updateBar");
+  document.getElementById("updateMsg").textContent = msg;
+  const num = S.groupNumber.replace(/[^0-9+]/g, "");
+  document.getElementById("sendTextBtn").href = "sms:" + num + "?&body=" + encodeURIComponent(msg);
+  bar.style.display = "block";
+  bar.dataset.msg = msg;
+  return false;
+}
+
+function markDone(id) {
+  const stop = S.stops.find(s => s.id === id);
+  if (!stop || stop.done) return;
+  stop.done = true; stop.doneAt = nowTime();
+  const msg = composeUpdate(stop);
+  S.feed.unshift({ text: msg, time: stop.doneAt });
+  save(); render();
+  sendUpdate(msg);
+}
+function undoStop(id) {
+  const stop = S.stops.find(s => s.id === id);
+  if (!stop) return;
+  stop.done = false; stop.doneAt = "";
+  save(); render();
+}
+function addStop(place, address, load) {
+  if (!place.trim()) { toast("Give the stop a place name"); return false; }
+  const id = S.stops.length ? Math.max.apply(null, S.stops.map(s => s.id)) + 1 : 1;
+  S.stops.push({ id, place: place.trim(), address: address.trim(), load: load.trim(), done: false, doneAt: "" });
+  save(); render();
+  return true;
+}
+function removeStop(id) { S.stops = S.stops.filter(s => s.id !== id); save(); render(); }
+function newDay() {
+  S.stops.forEach(s => { s.done = false; s.doneAt = ""; });
+  S.feed = [];
+  save(); render();
+  toast("New day started");
+}
+
+function render() {
+  const doneCount = S.stops.filter(s => s.done).length;
+  document.getElementById("progressText").textContent = doneCount + " of " + S.stops.length + " stops done";
+  document.getElementById("progressBar").style.width = (S.stops.length ? (doneCount / S.stops.length) * 100 : 0) + "%";
+  document.getElementById("allDone").style.display = (S.stops.length && doneCount === S.stops.length) ? "block" : "none";
+  const nextId = (S.stops.find(s => !s.done) || {}).id;
+  document.getElementById("stopList").innerHTML = S.stops.map((s, i) =>
+    '<div class="stop' + (s.done ? " done" : (s.id === nextId ? " next" : "")) + '">' +
+      '<div class="num">Stop ' + (i + 1) + '</div>' +
+      '<h3>' + esc(s.place) + '</h3>' +
+      '<div class="addr">' + esc(s.address) + '</div>' +
+      (s.load ? '<div class="load">' + esc(s.load) + '</div>' : "") +
+      (s.done
+        ? '<div class="doneinfo"><span>Delivered at ' + esc(s.doneAt) + '</span><button class="undo" data-undo="' + s.id + '">Undo</button></div>'
+        : '<button class="donebtn" data-done="' + s.id + '">DONE</button>') +
+    '</div>').join("");
+  const mine = '<div class="drivercard"><div class="name"><span>' + esc(myName()) + ' (you)</span><span class="count">' + doneCount + " / " + S.stops.length + '</span></div><div class="bar"><div style="width:' + (S.stops.length ? (doneCount / S.stops.length) * 100 : 0) + '%"></div></div></div>';
+  const ex = S.showExamples ? examples.map(d =>
+    '<div class="drivercard"><div class="name"><span>' + esc(d.name) + ' <span class="ex">example</span></span><span class="count">' + d.done + " / " + d.total + '</span></div><div class="bar"><div style="width:' + (d.done / d.total) * 100 + '%"></div></div></div>').join("") : "";
+  document.getElementById("driverCards").innerHTML = mine + ex;
+  document.getElementById("feedList").innerHTML = S.feed.length
+    ? S.feed.map(f => '<div class="feeditem">' + esc(f.text) + ' <span class="t">' + esc(f.time) + '</span></div>').join("")
+    : '<div class="feeditem">No updates yet today. The first finished stop shows up here.</div>';
+  document.getElementById("setupStopList").innerHTML = S.stops.map((s, i) =>
+    '<div class="srow"><span>' + (i + 1) + '. ' + esc(s.place) + '</span><button class="del" data-del="' + s.id + '">Remove</button></div>').join("");
+  document.getElementById("driverName").value = S.driverName;
+  document.getElementById("groupNumber").value = S.groupNumber;
+  document.getElementById("webhook").value = S.webhook;
+}
+
+let toastTimer = null;
+function toast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg; t.style.display = "block";
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.style.display = "none"; }, 2400);
+}
+
+document.querySelectorAll("nav button").forEach(b => b.addEventListener("click", () => {
+  document.querySelectorAll("nav button").forEach(x => x.classList.remove("active"));
+  document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+  b.classList.add("active");
+  document.getElementById("tab-" + b.dataset.tab).classList.add("active");
+}));
+document.addEventListener("click", e => {
+  const d = e.target.closest("[data-done]");
+  if (d) { markDone(Number(d.dataset.done)); return; }
+  const u = e.target.closest("[data-undo]");
+  if (u) { undoStop(Number(u.dataset.undo)); return; }
+  const del = e.target.closest("[data-del]");
+  if (del) { removeStop(Number(del.dataset.del)); }
+});
+document.getElementById("copyBtn").addEventListener("click", () => {
+  const msg = document.getElementById("updateBar").dataset.msg || "";
+  if (navigator.clipboard) navigator.clipboard.writeText(msg).then(() => toast("Copied. Paste it anywhere."));
+});
+document.getElementById("saveSetupBtn").addEventListener("click", () => {
+  S.driverName = document.getElementById("driverName").value;
+  S.groupNumber = document.getElementById("groupNumber").value;
+  S.webhook = document.getElementById("webhook").value;
+  save(); render();
+  toast("Setup saved");
+});
+document.getElementById("addStopBtn").addEventListener("click", () => {
+  if (addStop(document.getElementById("newPlace").value, document.getElementById("newAddr").value, document.getElementById("newLoad").value)) {
+    document.getElementById("newPlace").value = ""; document.getElementById("newAddr").value = ""; document.getElementById("newLoad").value = "";
+    toast("Stop added");
+  }
+});
+document.getElementById("removeExamplesBtn").addEventListener("click", () => { S.showExamples = false; save(); render(); toast("Examples removed"); });
+document.getElementById("newDayBtn").addEventListener("click", () => { if (confirm("Start a new day? Done marks and updates clear, stops stay.")) newDay(); });
+
+render();
+window.FEM = { get state() { return S; }, markDone, undoStop, addStop, removeStop, newDay, composeUpdate };
+</script>
+</body>
+</html>
