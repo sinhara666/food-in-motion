@@ -253,6 +253,7 @@ function foodLine(f) {
   if (f.protein) bits.push("Protein: " + f.protein);
   if (f.starch) bits.push("Starch: " + f.starch);
   if (f.greens) bits.push("Greens: " + f.greens);
+  if (f.veg) bits.push("Vegetables: " + f.veg);
   if (f.fruit) bits.push("Fruit: " + f.fruit);
   if (f.temp) bits.push("Temp: " + f.temp + "\u00B0F");
   return bits.join(" \u00B7 ");
@@ -273,7 +274,8 @@ function foodBox(e) {
   return '<div class="foodbox"><div class="foodtitle">Food on this stop</div>' +
     '<div class="foodgrid">' +
     inp("protein", "Protein, e.g. chicken") + inp("starch", "Starch, e.g. rice, rolls") +
-    inp("greens", "Greens, e.g. garden salad") + inp("fruit", "Fruit, e.g. apples, fruit cups") +
+    inp("greens", "Greens, e.g. garden salad") + inp("veg", "Vegetables, e.g. green beans, corn") +
+    inp("fruit", "Fruit, e.g. apples, fruit cups") + '<div></div>' +
     '</div>' + inp("temp", "Temperature \u00B0F, e.g. 145", "number") +
     (tempWarn(f) ? '<div class="tempwarn">Under 140\u00B0F. Hot food should hold at 140\u00B0F or above.</div>' : "") +
   '</div>';
